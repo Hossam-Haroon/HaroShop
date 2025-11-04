@@ -1,0 +1,26 @@
+package com.example.e_commerceapp.presentation.theme
+
+import androidx.compose.ui.graphics.Color
+
+val Purple80 = Color(0xFFD0BCFF)
+val PurpleGrey80 = Color(0xFFCCC2DC)
+val Pink80 = Color(0xFFEFB8C8)
+val LightRed = Color(0xFFF1AEAE)
+val DarkBlue = Color(0xFF004CFF)
+val LightBlue = Color(0xFFE5EBFC)
+val HeavyRed = Color(0xFFF81140)
+val LightGray = Color(0xFFE7E8EB)
+val LightRed2 = Color(0xFFFF5790)
+val DarkOrange = Color(0xFFF1B11C)
+val BlueishWhite = Color(0xFFF8FAFF)
+val BlueishWhite2 = Color(0xFFF5F8FF)
+val GrayishWhite = Color(0xFFF3F3F3)
+val DarkWhite2 = Color(0xFFEFEFEF)
+val DarkWhite = Color(0xFFF9F9F9)
+val Grey1 = Color(0xFFE8E8E8)
+val Grey2 = Color(0xFFA9A9A9)
+val Grey3 = Color(0xFF707070)
+val Purple40 = Color(0xFF6650a4)
+val PurpleGrey40 = Color(0xFF625b71)
+val Grey4 = Color(0xFF95989A)
+val Pink40 = Color(0xFF7D5260)

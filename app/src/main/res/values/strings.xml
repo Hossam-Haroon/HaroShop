@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">E_Commerce App</string>
+    <string name="my_email">hosamharon2016@gmail.com</string>
+    <string name="help_section">If you need help or you have any questions, feel free to contact me by email.</string>
+    <string name="about_app">HaroShop - Shopping" is likely an app that simulate alot of features like a real E_Commerce App, by providing alot of features like creating an account, liking a product, adding to cart or even buying it by simulating a fake purchase using stripe test mode. also with other techs like firebase auth, firebase firestore and also using cloud functions thanks to cloudflare to complete the payment methods by protecting my secret key and make it more secure, also the app is built based ona figma project already existing.</string>
+</resources>
