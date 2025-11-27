@@ -36,8 +36,6 @@ class ImageHandlingInDatabaseRepositoryImpl @Inject constructor(
     suspend fun getImageUrls(productIds: List<String>): Map<String, String> = withContext(Dispatchers.IO) {
         val query = ParseQuery.getQuery<ParseObject>(BACK4APP_PRODUCTS_CLASS)
 
-        // This is the key: "whereContainedIn"
-        // It gets all objects whose objectId is in your list
         query.whereContainedIn("objectId", productIds)
 
         val results = query.find() // This is ONE network call

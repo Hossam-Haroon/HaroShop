@@ -47,6 +47,9 @@ class PaymentProcessViewModel @Inject constructor(
     val onPaymentFailed = _onPaymentFailed.asStateFlow()
     private var _onPaymentSucceeded = MutableStateFlow(false)
     val onPaymentSucceeded = _onPaymentSucceeded.asStateFlow()
+    init {
+        loadSavedCards()
+    }
 
     fun loadSavedCards() {
         viewModelScope.launch {
@@ -60,7 +63,6 @@ class PaymentProcessViewModel @Inject constructor(
                     _paymentResult.value = "Error loading cards: ${it.message}"
                 }
             }
-
         }
     }
 

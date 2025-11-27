@@ -29,6 +29,7 @@ sealed class Screen(val route: String) {
     data object ToReceiveScreen : Screen("toReceiveScreen")
     data object PaymentScreen : Screen("paymentScreen")
     data object VoucherScreen : Screen("voucherScreen")
+    data object SettingsScreen : Screen("settingsScreen")
     data object ProfileSettingsScreen : Screen("profileSettingsScreen")
     data object PaymentMethodsSettingsScreen : Screen("shippingAddressSettingsScreen")
     data object ShippingAddressSettingsScreen : Screen("paymentMethodsSettingsScreen")

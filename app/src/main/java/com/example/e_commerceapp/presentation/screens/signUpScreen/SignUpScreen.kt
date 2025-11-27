@@ -1,13 +1,11 @@
 package com.example.e_commerceapp.presentation.screens.signUpScreen
 
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,9 +45,6 @@ import com.example.e_commerceapp.presentation.theme.DarkBlue
 import com.example.e_commerceapp.presentation.theme.raleWay
 import com.example.e_commerceapp.presentation.viewmodels.AuthViewModel
 import com.example.e_commerceapp.presentation.viewmodels.SignUpViewModel
-import com.skydoves.landscapist.glide.GlideImage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @Composable
 fun SignUpScreen(onNavigateToHelloScreen: () -> Unit) {
@@ -203,14 +197,8 @@ fun SignUpScreen(onNavigateToHelloScreen: () -> Unit) {
                 }
             )
         }
-        if (isLoading.value) {
-            LoadingProgressIcon()
-        }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SignUpScreenPreview() {
-    SignUpScreen() {}
+    if (isLoading.value) {
+        LoadingProgressIcon()
+    }
 }

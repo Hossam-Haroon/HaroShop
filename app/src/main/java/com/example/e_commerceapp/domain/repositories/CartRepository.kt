@@ -12,14 +12,10 @@ interface CartRepository {
         productAmount: Int,
         productColor: Long,
         productSize: String,
-        userId: String,
         category:String
     )
 
-    suspend fun deleteItemFromCart(
-        cartProduct: Cart,
-        userId: String
-    )
+    suspend fun deleteItemFromCart(cartProduct: Cart)
     suspend fun updateCartQuantity(userId: String,cartProduct: Cart,quantity:Int)
     suspend fun deleteAllProductsInCart(userId:String):Result<Unit>
 }

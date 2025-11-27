@@ -4,7 +4,7 @@ import com.example.e_commerceapp.domain.model.Review
 import kotlinx.coroutines.flow.Flow
 
 interface ReviewRepository {
-    suspend fun createReview(review: Review, productId: String): String
+    suspend fun createReview(review: Review, productId: String)
     suspend fun deleteReview(review: Review, productId: String)
     fun getAllProductReviews(productId: String): Flow<List<Review>>
     suspend fun updateReview(
@@ -13,10 +13,11 @@ interface ReviewRepository {
         userRate: Int,
         userText: String
     )
-    suspend fun checkIfCurrentUserHasReviewForCurrentProduct(
+    fun checkIfCurrentUserHasReviewForCurrentProduct(
         productId: String,
         userId: String
-    ): Pair<Boolean, Review?>
-    suspend fun checkIfReviewsAreEmptyOrNot(productId: String): Boolean
-    suspend fun getHighestRateReviewSample(productId: String): Review?
+    ):  Flow<Review?>
+    fun checkIfReviewsAreEmptyOrNot(productId: String): Flow<Boolean>
+    fun getHighestRateReviewSample(productId: String): Flow<Review?>
+    fun syncBackgroundDataForReviews(productId: String)
 }

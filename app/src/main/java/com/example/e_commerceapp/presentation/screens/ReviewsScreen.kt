@@ -41,10 +41,6 @@ fun ReviewsScreen(productId: String, navController: NavController) {
     val reviewsViewModel: ReviewsScreenViewModel = hiltViewModel()
     val allReviews by reviewsViewModel.productReviews.collectAsState()
     val currentUser by reviewsViewModel.currentUser.collectAsState()
-    LaunchedEffect(Unit) {
-        launch { reviewsViewModel.getAllProductReviews(productId) }
-        launch { reviewsViewModel.getCurrentUser() }
-    }
     Column(
         modifier = Modifier
             .padding(horizontal = 15.dp)

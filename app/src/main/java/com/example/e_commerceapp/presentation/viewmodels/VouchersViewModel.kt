@@ -11,50 +11,27 @@ import com.example.e_commerceapp.domain.usecases.imageHandlerUseCases.GetImageId
 import com.example.e_commerceapp.domain.usecases.userUseCases.GetUserByIdUseCase
 import com.example.e_commerceapp.domain.usecases.vouchersUseCases.GetAllUserVouchersUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class VouchersViewModel @Inject constructor(
     private val getUserByIdUseCase: GetUserByIdUseCase,
-    private val getImageIdForFetching: GetImageIdForFetching,
-    private val getAllUserVouchersUseCase: GetAllUserVouchersUseCase
+    getAllUserVouchersUseCase: GetAllUserVouchersUseCase
 ):ViewModel() {
-    private var _imageUrl = MutableStateFlow<String?>(null)
-    val imageUrl = _imageUrl.asStateFlow()
-    private var _userData = MutableStateFlow<User?>(
-        User(
-            "", "", "",
-            "", emptyList(), "", emptyList(), emptyList(), null,
-            ""
-        )
+    val userData : StateFlow<User?> = flow { emit(getUserByIdUseCase()) }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = null
     )
-    val userData = _userData.asStateFlow()
-    private var _currentVouchers = MutableStateFlow<List<Voucher>>(emptyList())
-    val currentVouchers = _currentVouchers.asStateFlow()
-    fun getUserProfileById() {
-        viewModelScope.launch {
-            _userData.value = getUserByIdUseCase()
-            val imageUrl = userData.value?.let {
-                getImageIdForFetching(
-                    it.userId,
-                    USER,
-                    USER_IMAGE_URL,
-                    BACK4APP_USER_CLASS
-                )
-            }
-            _imageUrl.value = imageUrl
-        }
-    }
-
-    fun getAllUserVouchers(){
-        viewModelScope.launch {
-            getAllUserVouchersUseCase().catch {
-                _currentVouchers.value = emptyList()
-            }.collect{ vouchers->
-                _currentVouchers.value = vouchers
-            }
-        }
-    }
+    val currentVouchers : StateFlow<List<Voucher>> = getAllUserVouchersUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
 }

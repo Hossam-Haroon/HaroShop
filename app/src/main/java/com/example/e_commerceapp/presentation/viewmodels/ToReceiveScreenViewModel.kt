@@ -19,104 +19,71 @@ import com.example.e_commerceapp.domain.usecases.userUseCases.GetUserByIdUseCase
 import com.example.e_commerceapp.presentation.uiModels.UserReviewStateCheck
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ToReceiveScreenViewModel @Inject constructor(
     private val getUserByIdUseCase: GetUserByIdUseCase,
-    private val getImageIdForFetching: GetImageIdForFetching,
     private val getAllOrdersForCurrentUserUseCase: GetAllOrdersForCurrentUserUseCase,
-    private val getUploadedImageUseCase: GetUploadedImageUseCase,
     private val checkIfCurrentUserHasReviewForCurrentProductUseCase:
     CheckIfCurrentUserHasReviewForCurrentProductUseCase,
-    private val createReviewAndUpdateUserReviewIdsUseCase: CreateReviewAndUpdateUserReviewIdsUseCase,
-    private val getCurrentUserByIdUseCase: GetUserByIdUseCase
+    private val createReviewAndUpdateUserReviewIdsUseCase: CreateReviewAndUpdateUserReviewIdsUseCase
 ) : ViewModel() {
-    private var _userData = MutableStateFlow<User?>(
-        User(
-            "", "", "",
-            "", emptyList(), "", emptyList(), emptyList(), null,
-            ""
-        )
+    val userData : StateFlow<User?> = flow {
+        emit(getUserByIdUseCase())
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = null
     )
-    val userData = _userData.asStateFlow()
-    private var _imageUrl = MutableStateFlow<String?>(null)
-    val imageUrl = _imageUrl.asStateFlow()
-    private var _userOrders = MutableStateFlow<List<Order>>(emptyList())
-    val userOrders = _userOrders.asStateFlow()
-    private var _userReviewState = MutableStateFlow<UserReviewStateCheck?>(null)
-    val userReviewState = _userReviewState.asStateFlow()
+    val userOrders : StateFlow<List<Order>> = getAllOrdersForCurrentUserUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
     private var _orderProductsReviewState = MutableStateFlow<Map<String, UserReviewStateCheck?>>(
         emptyMap()
     )
     val orderProductsReviewState = _orderProductsReviewState.asStateFlow()
-    private var _currentUser = MutableStateFlow<User?>(null)
-    val currentUser = _currentUser.asStateFlow()
 
     fun checkOrderProductsReviewExistence(orderItems: List<OrderItem>) {
         viewModelScope.launch {
-            val newMap = mutableMapOf<String, UserReviewStateCheck?>()
-            for (item in orderItems) {
-                val (doesExist, review) = checkIfCurrentUserHasReviewForCurrentProductUseCase(
-                    item.productId
-                )
-                val reviewWithImageUrl = review?.copy(
-                    userImage = getUploadedImageUseCase(review.userImage, BACK4APP_USER_CLASS) ?: ""
-                )
-                newMap[item.productId] = reviewWithImageUrl?.let {
-                    UserReviewStateCheck(doesExist, it)
-                }
+            try {
+                val orderProductsMap = orderItems.map { orderItem ->
+                    async {
+                        val review = checkIfCurrentUserHasReviewForCurrentProductUseCase(
+                            orderItem.productId
+                        ).first()
+                        val doesExist = (review != null)
+                        val state = UserReviewStateCheck(doesExist, review)
+                        orderItem.productId to state
+                    }
+                }.awaitAll()
+                _orderProductsReviewState.value = orderProductsMap.toMap()
+            } catch (e: Exception) {
+                _orderProductsReviewState.value = emptyMap()
             }
-            _orderProductsReviewState.value = newMap
-        }
-    }
-
-    fun getCurrentUserDataForReview() {
-        viewModelScope.launch {
-            val user = getCurrentUserByIdUseCase()
-            val userWithImageUrl = user?.copy(
-                imageUrl = user.imageUrl?.let { getUploadedImageUseCase(it, BACK4APP_USER_CLASS) }
-            )
-            _currentUser.value = userWithImageUrl
         }
     }
 
     fun createReviewAndUpdateUserReviewsIds(
         review: Review,
         productId: String,
-        orderItems:List<OrderItem>) {
+        orderItems: List<OrderItem>
+    ) {
         viewModelScope.launch {
             createReviewAndUpdateUserReviewIdsUseCase(review, productId)
             checkOrderProductsReviewExistence(orderItems)
-        }
-    }
-
-    fun getUserProfileById() {
-        viewModelScope.launch {
-            _userData.value = getUserByIdUseCase()
-            val imageUrl = userData.value?.let {
-                getImageIdForFetching(
-                    it.userId,
-                    USER,
-                    USER_IMAGE_URL,
-                    BACK4APP_USER_CLASS
-                )
-            }
-            _imageUrl.value = imageUrl
-        }
-    }
-
-    fun getAllOrdersForUser() {
-        viewModelScope.launch {
-            getAllOrdersForCurrentUserUseCase().catch {
-                _userOrders.value = emptyList()
-            }.collect { orders ->
-                _userOrders.value = orders
-            }
         }
     }
 }

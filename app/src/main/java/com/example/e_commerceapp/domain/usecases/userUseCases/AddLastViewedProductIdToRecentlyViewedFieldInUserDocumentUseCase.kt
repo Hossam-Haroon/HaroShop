@@ -6,12 +6,9 @@ import javax.inject.Inject
 
 class AddLastViewedProductIdToRecentlyViewedFieldInUserDocumentUseCase
 @Inject constructor(
-    private val userRepository: UserRepository,
-    private val authenticationRepository: AuthenticationRepository
+    private val userRepository: UserRepository
 ){
     suspend operator fun invoke(productId:String){
-        val userId  = authenticationRepository.getCurrentUser()?.uid
-            ?: throw IllegalStateException("User must be logged in")
-        userRepository.addLastViewedProductIdToRecentlyViewedFieldInUserDocument(productId,userId)
+        userRepository.addLastViewedProductIdToRecentlyViewedFieldInUserDocument(productId)
     }
 }

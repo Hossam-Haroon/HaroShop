@@ -1,7 +1,27 @@
 package com.example.e_commerceapp.di.repositories
 
 import android.content.Context
+import androidx.work.WorkManager
+import com.example.e_commerceapp.data.local.dataSources.LocalCartDataSource
+import com.example.e_commerceapp.data.local.dataSources.LocalCategoryDataSource
+import com.example.e_commerceapp.data.local.dataSources.LocalDiscountDataSource
+import com.example.e_commerceapp.data.local.dataSources.LocalOrderDataSource
+import com.example.e_commerceapp.data.local.dataSources.LocalProductDataSource
+import com.example.e_commerceapp.data.local.dataSources.LocalReviewDataSource
+import com.example.e_commerceapp.data.local.dataSources.LocalUserDataSource
+import com.example.e_commerceapp.data.local.dataSources.LocalVouchersDataSource
+import com.example.e_commerceapp.data.local.dataSources.LocalWishListProductsDataSource
 import com.example.e_commerceapp.data.remote.BackendApiService
+import com.example.e_commerceapp.data.remote.dataSources.RemoteAuthDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteCartDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteCategoryDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteDiscountDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteImageDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteOrderDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteProductDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteReviewDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteUserDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteVouchersDataSource
 import com.example.e_commerceapp.data.repositories.CartRepositoryImpl
 import com.example.e_commerceapp.data.repositories.CategoryRepositoryImpl
 import com.example.e_commerceapp.data.repositories.DiscountRepositoryImpl
@@ -41,14 +61,24 @@ object RepositoriesModule {
 
     @Provides
     @Singleton
-    fun getAuthRepoImpl(firebaseAuth: FirebaseAuth): AuthenticationRepository {
-        return FirebaseAuthRepositoryImpl(firebaseAuth)
+    fun getAuthRepoImpl(remoteAuthDataSource: RemoteAuthDataSource): AuthenticationRepository {
+        return FirebaseAuthRepositoryImpl(remoteAuthDataSource)
     }
 
     @Provides
     @Singleton
-    fun getUserRepoImpl(firestore: FirebaseFirestore): UserRepository =
-        UserRepositoryImpl(firestore)
+    fun getUserRepoImpl(
+        localUserDataSource: LocalUserDataSource,
+        remoteUserDataSource: RemoteUserDataSource,
+        authDataSource: RemoteAuthDataSource,
+        remoteImageDataSource: RemoteImageDataSource
+    ): UserRepository =
+        UserRepositoryImpl(
+            remoteUserDataSource,
+            localUserDataSource,
+            authDataSource,
+            remoteImageDataSource
+        )
 
     @Provides
     @Singleton
@@ -58,32 +88,75 @@ object RepositoriesModule {
 
     @Provides
     @Singleton
-    fun getProduct(firestore: FirebaseFirestore): ProductRepository {
-        return ProductRepositoryImpl(firestore)
+    fun getProduct(
+        localProductDataSource: LocalProductDataSource,
+        remoteProductDataSource: RemoteProductDataSource,
+        remoteImageDataSource: RemoteImageDataSource,
+        localWishListProductsDataSource: LocalWishListProductsDataSource,
+        workManager: WorkManager
+    ): ProductRepository {
+        return ProductRepositoryImpl(
+            localProductDataSource,
+            remoteProductDataSource,
+            remoteImageDataSource,
+            localWishListProductsDataSource,
+            workManager
+        )
     }
 
     @Provides
     @Singleton
-    fun getReviewRepoImpl(firestore: FirebaseFirestore): ReviewRepository {
-        return ReviewRepositoryImpl(firestore)
+    fun getReviewRepoImpl(
+        remoteReviewDataSource: RemoteReviewDataSource,
+        localReviewDataSource: LocalReviewDataSource,
+        workManager: WorkManager
+    ): ReviewRepository {
+        return ReviewRepositoryImpl(
+            remoteReviewDataSource,
+            localReviewDataSource,
+            workManager
+        )
     }
 
     @Provides
     @Singleton
-    fun getCategoryRepoImpl(firestore: FirebaseFirestore):CategoryRepository{
-        return CategoryRepositoryImpl(firestore)
+    fun getCategoryRepoImpl(
+        remoteCategoryDataSource: RemoteCategoryDataSource,
+        localCategoryDataSource: LocalCategoryDataSource,
+        remoteImageDataSource: RemoteImageDataSource
+    ): CategoryRepository {
+        return CategoryRepositoryImpl(
+            remoteCategoryDataSource,
+            localCategoryDataSource,
+            remoteImageDataSource
+        )
     }
 
     @Provides
     @Singleton
-    fun getCartRepoImpl(firestore: FirebaseFirestore): CartRepository {
-        return CartRepositoryImpl(firestore)
+    fun getCartRepoImpl(
+        remoteCartDataSource: RemoteCartDataSource,
+        localCartDataSource: LocalCartDataSource,
+        authDataSource: RemoteAuthDataSource,
+        remoteImageDataSource: RemoteImageDataSource,
+        workManager: WorkManager
+    ): CartRepository {
+        return CartRepositoryImpl(
+            remoteCartDataSource,
+            localCartDataSource,
+            remoteImageDataSource,
+            authDataSource,
+            workManager
+        )
     }
 
     @Provides
     @Singleton
-    fun getDiscountRepoImpl(firestore: FirebaseFirestore): DiscountRepository{
-        return DiscountRepositoryImpl(firestore)
+    fun getDiscountRepoImpl(
+        localDiscountDataSource: LocalDiscountDataSource,
+        remoteDiscountDataSource: RemoteDiscountDataSource
+    ): DiscountRepository {
+        return DiscountRepositoryImpl(localDiscountDataSource, remoteDiscountDataSource)
     }
 
     @Provides
@@ -95,18 +168,26 @@ object RepositoriesModule {
     @Provides
     @Singleton
     fun getVoucherRepoImpl(
-        firestore: FirebaseFirestore
-    ): VouchersRepository = VouchersRepositoryImpl(firestore)
+        remoteVouchersDataSource: RemoteVouchersDataSource,
+        localVouchersDataSource: LocalVouchersDataSource,
+        authDataSource: RemoteAuthDataSource
+    ): VouchersRepository = VouchersRepositoryImpl(
+        remoteVouchersDataSource, localVouchersDataSource, authDataSource
+    )
 
     @Provides
     @Singleton
     fun getPaymentRepoImpl(
-        backendApi : BackendApiService
+        backendApi: BackendApiService
     ): PaymentRepository = PaymentRepositoryImpl(backendApi)
 
     @Provides
     @Singleton
     fun getOrderRepoImpl(
-        firestore: FirebaseFirestore
-    ): OrderRepository = OrderRepositoryImpl(firestore)
+        remoteOrderDataSource: RemoteOrderDataSource,
+        localOrderDataSource: LocalOrderDataSource,
+        authDataSource: RemoteAuthDataSource
+    ): OrderRepository = OrderRepositoryImpl(
+        remoteOrderDataSource, localOrderDataSource, authDataSource
+    )
 }

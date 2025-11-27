@@ -1,6 +1,5 @@
 package com.example.e_commerceapp.presentation.screens.mainScreens
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,10 +23,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -44,7 +41,7 @@ import com.example.e_commerceapp.presentation.components.ColorfulButton
 import com.example.e_commerceapp.presentation.components.FlashSaleComponent
 import com.example.e_commerceapp.presentation.components.ImageWithContentAndPriceItem
 import com.example.e_commerceapp.presentation.components.ImageWithPortraitComponent
-import com.example.e_commerceapp.presentation.components.MostPopularICardItem
+import com.example.e_commerceapp.presentation.components.MostPopularSectionComponent
 import com.example.e_commerceapp.presentation.components.SeeAllObjectsRow
 import com.example.e_commerceapp.presentation.components.StoryCardItem
 import com.example.e_commerceapp.presentation.theme.DarkBlue
@@ -53,21 +50,18 @@ import com.example.e_commerceapp.presentation.theme.LightBlue
 import com.example.e_commerceapp.presentation.theme.raleWay
 import com.example.e_commerceapp.presentation.viewmodels.ProfileAndStorySharedViewModel
 import com.example.e_commerceapp.presentation.viewmodels.ProfileScreenViewModel
-import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileScreen(rootNavController: NavController,innerNavController: NavController) {
+fun ProfileScreen(rootNavController: NavController, innerNavController: NavController) {
     val profileViewModel: ProfileScreenViewModel = hiltViewModel()
     val sharedStoriesViewModel: ProfileAndStorySharedViewModel = hiltViewModel(
         rootNavController.getViewModelStoreOwner(rootNavController.graph.id)
     )
-    val userData = profileViewModel.userData.collectAsState()
-    val userImageUrl by profileViewModel.imageUrl.collectAsState()
+    val userData by profileViewModel.userData.collectAsState()
     val recentlyViewedProductsUrl by profileViewModel.recentlyViewedProducts.collectAsState()
     val newProducts by profileViewModel.newProducts.collectAsState()
     val popularProducts by profileViewModel.popularProducts.collectAsState()
     val categories by profileViewModel.categories.collectAsState()
-    val sampleImagesUrl by profileViewModel.sampleImagesUrl.collectAsState()
     val flashSaleProducts by profileViewModel.flashSaleProducts.collectAsState()
     val storyProducts by sharedStoriesViewModel.storyProducts.collectAsState()
     val justForYouProducts by profileViewModel.justForYouProducts.collectAsState()
@@ -76,16 +70,6 @@ fun ProfileScreen(rootNavController: NavController,innerNavController: NavContro
     for (product in storyProducts) {
         storyProductsImagesUrl += product.productImage
         storyProductsId += product.productId
-    }
-    LaunchedEffect(Unit) {
-        launch { profileViewModel.getUserProfileById() }
-        launch { profileViewModel.getRecentlyViewedProductsFromUserCollection() }
-        launch { profileViewModel.getNewestTenProducts() }
-        launch { profileViewModel.getMostPopularProducts() }
-        launch { profileViewModel.getSampleCategories() }
-        launch { profileViewModel.fetchFlashSaleProducts() }
-        launch { sharedStoriesViewModel.getStoryProducts() }
-        launch { profileViewModel.getJustForYouProducts() }
     }
     Column(
         modifier = Modifier
@@ -106,7 +90,7 @@ fun ProfileScreen(rootNavController: NavController,innerNavController: NavContro
             ) {
                 ImageWithPortraitComponent(
                     portraitSize = 43.dp, imageSize = 40.dp,
-                    userImageUrl
+                    userData?.imageUrl
                 ) {
                 }
                 ColorfulButton(
@@ -152,14 +136,14 @@ fun ProfileScreen(rootNavController: NavController,innerNavController: NavContro
                     modifier = Modifier
                         .size(35.dp)
                         .clickable {
-
+                            innerNavController.navigate(Screen.SettingsScreen.route)
                         }
                 )
             }
         }
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "Hello, ${userData.value?.userName}!",
+            text = "Hello, ${userData?.userName}!",
             fontFamily = raleWay,
             fontWeight = FontWeight.Bold,
             fontSize = 28.sp
@@ -268,49 +252,30 @@ fun ProfileScreen(rootNavController: NavController,innerNavController: NavContro
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            items(newProducts.takeLast(5)) { pair ->
-                pair.first?.let {
-                    ImageWithContentAndPriceItem(
-                        pair.second, it.description,
-                        it.productPrice.toString(),
-                        135.dp, 135.dp,
-                        130.dp, 130.dp
-                    ) {
-                        rootNavController.navigate(
-                            Screen.ProductScreen.createRouteForKnownProduct(
-                                it.productId,
-                                0,
-                                "none",
-                                1
-                            )
+            items(newProducts.takeLast(5)) { product ->
+                ImageWithContentAndPriceItem(
+                    product.productImage, product.description,
+                    product.productPrice.toString(),
+                    135.dp, 135.dp,
+                    130.dp, 130.dp
+                ) {
+                    rootNavController.navigate(
+                        Screen.ProductScreen.createRouteForKnownProduct(
+                            product.productId,
+                            0,
+                            "none",
+                            1
                         )
-                    }
+                    )
                 }
             }
         }
         Spacer(modifier = Modifier.height(15.dp))
         if (popularProducts.isNotEmpty()) {
-            SeeAllObjectsRow("Most Popular") {}
-            Spacer(modifier = Modifier.height(13.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(popularProducts.takeLast(5)) { product ->
-                    Log.d("ProfileScreen", "$product")
-                    MostPopularICardItem(product.productImage, product.favouriteCount) {
-                        rootNavController.navigate(
-                            Screen.ProductScreen.createRouteForKnownProduct(
-                                product.productId,
-                                0,
-                                "none",
-                                1
-                            )
-                        )
-                    }
-                }
-            }
+            MostPopularSectionComponent(
+                popularProducts = popularProducts,
+                rootNavController = rootNavController
+            )
         }
         Spacer(modifier = Modifier.height(15.dp))
         SeeAllObjectsRow("Categories") {
@@ -324,16 +289,14 @@ fun ProfileScreen(rootNavController: NavController,innerNavController: NavContro
                 .height(400.dp)
         ) {
             items(categories) { category ->
-                sampleImagesUrl[category.categoryId]?.let {
-                    CategoryCardItem(
-                        it,
-                        category.categoryName,
-                        category.productCount
-                    ) { categoryName ->
-                        rootNavController.navigate(
-                            Screen.CategoryProductsScreen.createRoute(categoryName)
-                        )
-                    }
+                CategoryCardItem(
+                    category.thumbnailSampleImagesId,
+                    category.categoryName,
+                    category.productCount
+                ) { categoryName ->
+                    rootNavController.navigate(
+                        Screen.CategoryProductsScreen.createRoute(categoryName)
+                    )
                 }
             }
         }

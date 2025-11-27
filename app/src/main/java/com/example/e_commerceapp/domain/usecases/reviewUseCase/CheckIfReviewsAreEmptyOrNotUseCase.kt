@@ -6,6 +6,6 @@ import javax.inject.Inject
 class CheckIfReviewsAreEmptyOrNotUseCase @Inject constructor(
     private val reviewRepository: ReviewRepository
 ) {
-    suspend operator fun invoke(productId: String) =
+    operator fun invoke(productId: String) =
         reviewRepository.checkIfReviewsAreEmptyOrNot(productId)
 }

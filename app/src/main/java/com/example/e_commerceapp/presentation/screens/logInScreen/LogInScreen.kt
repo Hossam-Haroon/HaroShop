@@ -102,8 +102,3 @@ fun LogInScreen(onNavigateToPasswordScreen:(String)->Unit){
         }
     }
 }
-@Preview(showBackground = true)
-@Composable
-fun LogInScreenPreview() {
-    LogInScreen(){}
-}

@@ -42,9 +42,6 @@ fun CategoryProductsScreen(categoryName: String, navController: NavController) {
     val categoryProductsScreenViewModel: CategoryProductsScreenViewModel = hiltViewModel()
     val products by categoryProductsScreenViewModel.products.collectAsState()
     val isLoading by categoryProductsScreenViewModel.isLoading.collectAsState()
-    LaunchedEffect(Unit) {
-        launch { categoryProductsScreenViewModel.getAllProducts(categoryName) }
-    }
     Box(
         modifier = Modifier
             .padding(horizontal = 10.dp)

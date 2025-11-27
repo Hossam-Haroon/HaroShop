@@ -66,7 +66,6 @@ fun ProductScreen(
 ) {
     val productViewModel: ProductScreenViewModel = hiltViewModel()
     val product by productViewModel.product.collectAsState()
-    val imageUrl by productViewModel.imageUrl.collectAsState()
     val userReviewState by productViewModel.userReviewState.collectAsState()
     val reviewsState by productViewModel.reviewsOnCurrentProductState.collectAsState()
     val highestRateReview by productViewModel.highestRateReview.collectAsState()
@@ -84,16 +83,6 @@ fun ProductScreen(
     var showDeleteReviewDialog by remember { mutableStateOf(false) }
     var reviewText by remember { mutableStateOf("") }
     var reviewRate by remember { mutableIntStateOf(0) }
-    LaunchedEffect(productId) {
-        launch { productViewModel.getProductById(productId) }
-        launch { productViewModel.checkUserReviewOnTheProductState(productId) }
-        launch { productViewModel.checkIfReviewsAreEmptyOrNot(productId) }
-        launch { productViewModel.getHighestRateReviewAsSample(productId) }
-        launch { productViewModel.getMostPopularProducts() }
-        launch { productViewModel.getIsProductLikedState(productId) }
-        launch { productViewModel.addLastViewedProductToRecentlyViewed(productId) }
-        launch { productViewModel.getCurrentUserDataForReview() }
-    }
     LaunchedEffect(Unit) {
         productViewModel.uiEvent.collect { message ->
             Toast.makeText(
@@ -112,7 +101,7 @@ fun ProductScreen(
                      }else{
                          productViewModel.addProductIdToFavouriteProducts(productId)
                      }*/
-                    productViewModel.toggleLikedProductsCounts(productId)
+                    productViewModel.toggleLikedProductsCounts()
                 }, onAddToCart = {
                     product?.let {
                         productViewModel.insertProductToCart(
@@ -136,7 +125,7 @@ fun ProductScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             AsyncImage(
-                model = imageUrl,
+                model = product?.productImage,
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -230,7 +219,7 @@ fun ProductScreen(
             Spacer(modifier = Modifier.height(10.dp))
             DeliverySectionComponent("Express", "1-2", "12,00")
             Spacer(modifier = Modifier.height(25.dp))
-            if (userReviewState?.review == null) {
+            if (userReviewState == null) {
                 SettingUserReviewComponent(reviewRate,
                     onRateCLick = {
                         reviewRate = it
@@ -248,20 +237,21 @@ fun ProductScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
             when {
-                userReviewState?.doesReviewExist == true -> {
+                userReviewState != null -> {
                     ReviewComponent(
-                        userReviewState!!.review,
+                        userReviewState!!,
                         true,
                         onDeleteClick = {
                             showDeleteReviewDialog = true
                         },
                         onUpdateClick = {
-                            reviewRate = userReviewState!!.review.userRate
-                            reviewText = userReviewState!!.review.reviewText
+                            reviewRate = userReviewState!!.userRate
+                            reviewText = userReviewState!!.reviewText
                             showUpdateReviewBottomSheet = true
                         }
                     )
                 }
+
                 reviewsState -> {
                     highestRateReview?.let {
                         ReviewComponent(
@@ -290,17 +280,15 @@ fun ProductScreen(
         }
         if (showBottomSheet) {
             if (priceAfterDiscount != null) {
-                imageUrl?.let { imageUrl ->
-                    product?.let { product ->
-                        ProductModalBottomSheet(
-                            imageUrl, priceAfterDiscount,
-                            product, colorOption, sizeOption, quantity,
-                            setColorOption = { color -> colorOption = color },
-                            setSizeOption = { size -> sizeOption = size },
-                            onDismissRequest = { showBottomSheet = false },
-                            decreaseQuantityByOne = { quantity -= 1 },
-                            increaseQuantityByOne = { quantity += 1 })
-                    }
+                product?.let { product ->
+                    ProductModalBottomSheet(
+                        product.productImage, priceAfterDiscount,
+                        product, colorOption, sizeOption, quantity,
+                        setColorOption = { color -> colorOption = color },
+                        setSizeOption = { size -> sizeOption = size },
+                        onDismissRequest = { showBottomSheet = false },
+                        decreaseQuantityByOne = { quantity -= 1 },
+                        increaseQuantityByOne = { quantity += 1 })
                 }
             }
         }
@@ -347,7 +335,7 @@ fun ProductScreen(
                     onDismissRequest = { showUpdateReviewBottomSheet = false },
                     onValueChange = { text -> reviewText = text }
                 ) {
-                    userReviewState?.review?.let { review ->
+                    userReviewState?.let { review ->
                         productViewModel.updateUserReview(
                             review.reviewId,
                             productId,
@@ -371,9 +359,11 @@ fun ProductScreen(
                 DeleteItemDialogComponent(
                     itemName = "Review",
                     onConfirm = {
-                        productViewModel.deleteReviewAndUpdateUserReviewsIds(
-                            userReviewState!!.review, productId
-                        )
+                        userReviewState?.let {
+                            productViewModel.deleteReviewAndUpdateUserReviewsIds(
+                                it, productId
+                            )
+                        }
                         showDeleteReviewDialog = false
                         Toast.makeText(
                             context,

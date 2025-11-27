@@ -6,12 +6,9 @@ import com.example.e_commerceapp.domain.repositories.UserRepository
 import javax.inject.Inject
 
 class GetUserByIdUseCase @Inject constructor(
-    private val userRepository: UserRepository,
-    private val authenticationRepository: AuthenticationRepository
+    private val userRepository: UserRepository
 ) {
     suspend operator fun invoke(): User? {
-        val userId  = authenticationRepository.getCurrentUser()?.uid
-            ?: throw IllegalStateException("User must be logged in")
-        return userRepository.getUserById(userId)
+        return userRepository.getCurrentUser()
     }
 }

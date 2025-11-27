@@ -2,123 +2,94 @@ package com.example.e_commerceapp.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.e_commerceapp.core.Utils.BACK4APP_PRODUCTS_CLASS
-import com.example.e_commerceapp.core.Utils.PRODUCT
-import com.example.e_commerceapp.core.Utils.PRODUCT_IMAGE_URL
 import com.example.e_commerceapp.domain.model.Product
-import com.example.e_commerceapp.domain.usecases.imageHandlerUseCases.GetImageIdForFetching
-import com.example.e_commerceapp.domain.usecases.imageHandlerUseCases.GetUploadedImageUseCase
+import com.example.e_commerceapp.domain.usecases.productUseCases.GetAllFavouriteProductsIdsUseCase
 import com.example.e_commerceapp.domain.usecases.productUseCases.GetMostPopularProductsUseCase
 import com.example.e_commerceapp.domain.usecases.productUseCases.GetProductByIdUseCase
-import com.example.e_commerceapp.domain.usecases.productUseCases.ToggleFavouriteProductsUseCase
-import com.example.e_commerceapp.domain.usecases.userUseCases.DeleteFavouriteProductUseCase
-import com.example.e_commerceapp.domain.usecases.userUseCases.GetFavouriteProductsUseCase
+import com.example.e_commerceapp.domain.usecases.productUseCases.UnLikeProductUseCase
 import com.example.e_commerceapp.domain.usecases.userUseCases.GetRecentlyViewedProductIdsFromUserCollectionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class WishListScreenViewModel @Inject constructor(
-    private val getRecentlyViewedProductIdsFromUserCollectionUseCase:
+    getRecentlyViewedProductIdsFromUserCollectionUseCase:
     GetRecentlyViewedProductIdsFromUserCollectionUseCase,
-    private val getImageIdForFetching: GetImageIdForFetching,
-    private val getMostPopularProductsUseCase: GetMostPopularProductsUseCase,
-    private val getUploadedImageUseCase: GetUploadedImageUseCase,
+    getMostPopularProductsUseCase: GetMostPopularProductsUseCase,
     private val getProductByIdUseCase: GetProductByIdUseCase,
-    private val getFavouriteProductsUseCase: GetFavouriteProductsUseCase,
-    private val toggleFavouriteProductsUseCase: ToggleFavouriteProductsUseCase
-    ) : ViewModel() {
-    private var _recentlyViewedProducts = MutableStateFlow<List<Pair<String, String>>>(emptyList())
-    val recentlyViewedProducts = _recentlyViewedProducts.asStateFlow()
-    private var _popularProducts = MutableStateFlow<List<Product>>(emptyList())
-    val popularProducts = _popularProducts.asStateFlow()
-    private var _likedProducts = MutableStateFlow<List<Product>>(emptyList())
-    val likedProducts = _likedProducts.asStateFlow()
-
-    fun getRecentlyViewedProductsFromUserCollection() {
-        viewModelScope.launch {
-            getRecentlyViewedProductIdsFromUserCollectionUseCase()
-                .catch {
-                    _recentlyViewedProducts.value = emptyList()
-                }.collect { productIds ->
-                    if (productIds != null) {
-                        mapCollectedProductsIdsToFetchUrlsFromThem(productIds)
+    getAllFavouriteProductsIdsUseCase: GetAllFavouriteProductsIdsUseCase,
+    private val unLikeProductUseCase: UnLikeProductUseCase
+) : ViewModel() {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val recentlyViewedProducts : StateFlow<List<Pair<String,String?>>> =
+        getRecentlyViewedProductIdsFromUserCollectionUseCase().flatMapLatest { productIds ->
+            if (productIds.isNullOrEmpty()){
+                flowOf(emptyList())
+            }else{
+                flow {
+                    val productPairs = coroutineScope {
+                        productIds.map { productId ->
+                            async {
+                                val imageUrl = getProductByIdUseCase(
+                                    productId
+                                ).first()?.productImage
+                                productId to imageUrl
+                            }
+                        }.awaitAll()
                     }
-                }
-        }
-    }
-
-    fun getMostPopularProducts() {
-        viewModelScope.launch {
-            getMostPopularProductsUseCase().collect { result ->
-                result.onSuccess { products ->
-                    val productsWithImageUrls = products.map { product ->
-                        async {
-                            product.copy(
-                                productImage = getUploadedImageUseCase(
-                                    product.productImage, BACK4APP_PRODUCTS_CLASS
-                                ) ?: ""
-                            )
-                        }
-                    }.awaitAll()
-                    _popularProducts.value = productsWithImageUrls
-                }.onFailure {
-                    _popularProducts.value = emptyList()
+                    emit(productPairs)
                 }
             }
-        }
-    }
-
-    fun fetchAllFavouriteProducts() {
-        viewModelScope.launch {
-            getFavouriteProductsUseCase().collect { productsIds ->
-                if (productsIds.isEmpty()) {
-                    _likedProducts.value = emptyList()
-                    return@collect
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = emptyList()
+        )
+    val popularProducts : StateFlow<List<Product>> =
+        getMostPopularProductsUseCase().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = emptyList()
+        )
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val likedProducts : StateFlow<List<Product>> = getAllFavouriteProductsIdsUseCase()
+        .flatMapLatest {wishListProducts ->
+            if (wishListProducts.isEmpty()){
+                flowOf(emptyList())
+            }else{
+                flow {
+                    val favouriteProductsIds = wishListProducts.map { it.productId }
+                    val favouriteProducts = coroutineScope {
+                        favouriteProductsIds.map {id ->
+                            async {
+                                getProductByIdUseCase(id).first()
+                            }
+                        }.awaitAll().filterNotNull()
+                    }
+                    emit(favouriteProducts)
                 }
-                val favouriteProducts = coroutineScope {
-                    productsIds.map { id ->
-                        async {
-                            val product = getProductByIdUseCase(id)
-                            if (product != null) {
-                                val imageUrl = getUploadedImageUseCase(
-                                    product.productImage,
-                                    BACK4APP_PRODUCTS_CLASS
-                                ) ?: ""
-                                product.copy(productImage = imageUrl)
-                            } else null
-                        }
-                    }.awaitAll().filterNotNull()
-                }
-                _likedProducts.value = favouriteProducts
             }
-        }
-    }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
 
-    private suspend fun mapCollectedProductsIdsToFetchUrlsFromThem(productIds: List<String>) {
-        val productPairs = coroutineScope {
-            productIds.map { productId ->
-                async {
-                    val imageUrl = getImageIdForFetching(
-                        productId, PRODUCT, PRODUCT_IMAGE_URL, BACK4APP_PRODUCTS_CLASS
-                    ) ?: ""
-                    productId to imageUrl
-                }
-            }.awaitAll()
-        }
-        _recentlyViewedProducts.value = productPairs
-    }
-
-    fun deleteFavouriteProduct(productId:String){
+    fun unlikeProduct(productId: String) {
         viewModelScope.launch {
-            toggleFavouriteProductsUseCase(productId)
+            unLikeProductUseCase(productId)
         }
     }
 }

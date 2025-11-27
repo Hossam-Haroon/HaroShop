@@ -24,13 +24,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun VouchersScreen(){
     val vouchersViewModel : VouchersViewModel = hiltViewModel()
-    val userImageUrl by vouchersViewModel.imageUrl.collectAsState()
+    val userData by vouchersViewModel.userData.collectAsState()
     val currentVouchers by vouchersViewModel.currentVouchers.collectAsState()
-
-    LaunchedEffect(Unit) {
-        launch { vouchersViewModel.getUserProfileById() }
-        launch { vouchersViewModel.getAllUserVouchers() }
-    }
     Column (
         modifier = Modifier
             .padding(horizontal = 10.dp)
@@ -39,7 +34,7 @@ fun VouchersScreen(){
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         Spacer(modifier = Modifier.height(30.dp))
-        ScreenHeadSectionComponent(userImageUrl,"Vouchers"){}
+        ScreenHeadSectionComponent(userData?.imageUrl,"Vouchers"){}
         Column (
             modifier = Modifier.fillMaxWidth(),
 

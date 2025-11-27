@@ -36,11 +36,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun ToReceiveScreen(innerNavController: NavController){
     val toReceiveViewModel : ToReceiveScreenViewModel = hiltViewModel()
-    val userImageUrl by toReceiveViewModel.imageUrl.collectAsState()
+    val userData by toReceiveViewModel.userData.collectAsState()
     val userOrders by toReceiveViewModel.userOrders.collectAsState()
-    val userReviewState by toReceiveViewModel.userReviewState.collectAsState()
     val orderItemsReviewState by toReceiveViewModel.orderProductsReviewState.collectAsState()
-    val currentUser by toReceiveViewModel.currentUser.collectAsState()
     var deliveredProductBottomSheet by remember { mutableStateOf(false) }
     var openReviewBottomSheet by remember { mutableStateOf(false) }
     var clickedOrder by remember { mutableStateOf<Order?>(null) }
@@ -49,22 +47,13 @@ fun ToReceiveScreen(innerNavController: NavController){
     var reviewRate by remember { mutableIntStateOf(0) }
     var reviewText by remember { mutableStateOf("") }
     val context = LocalContext.current
-    LaunchedEffect(Unit) {
-        launch { toReceiveViewModel.getAllOrdersForUser() }
-        launch { toReceiveViewModel.getCurrentUserDataForReview() }
-        launch { toReceiveViewModel.getUserProfileById() }
-    }
-    LaunchedEffect(orderItemsReviewState) {
-        println("orderItemsReviewState: ${orderItemsReviewState.keys}")
-    }
-
     Column (
         modifier = Modifier
             .padding(horizontal = 10.dp)
             .verticalScroll(rememberScrollState())
     ){
         Spacer(modifier = Modifier.height(30.dp))
-        ToReceiveHeadLineComponent(userImageUrl){
+        ToReceiveHeadLineComponent(userData?.imageUrl){
             innerNavController.navigate(Screen.VoucherScreen.route)
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -84,6 +73,9 @@ fun ToReceiveScreen(innerNavController: NavController){
                             toReceiveViewModel.checkOrderProductsReviewExistence(it)
                         }
                         deliveredProductBottomSheet = true
+                    },
+                    onTicketCLicked = {
+                        // nav to chat screen
                     }
                 )
                 Spacer(modifier = Modifier.height(15.dp))
@@ -118,10 +110,10 @@ fun ToReceiveScreen(innerNavController: NavController){
                     reviewText = text
                 },
                 onSetReview = { productId ->
-                    val review = currentUser?.let { user ->
+                    val review = userData?.let { user ->
                         Review(
                             reviewId = "",
-                            userId = currentUser!!.userId,
+                            userId = user.userId,
                             userRate = reviewRate,
                             reviewText = reviewText,
                             userImage = user.imageUrl ?: "",

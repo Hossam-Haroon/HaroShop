@@ -1,7 +1,5 @@
 package com.example.e_commerceapp.presentation.viewmodels
 
-
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.e_commerceapp.domain.usecases.authUseCases.GetCurrentUserUseCase

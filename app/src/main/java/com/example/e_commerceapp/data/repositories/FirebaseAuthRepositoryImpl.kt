@@ -1,5 +1,6 @@
 package com.example.e_commerceapp.data.repositories
 
+import com.example.e_commerceapp.data.remote.dataSources.RemoteAuthDataSource
 import com.example.e_commerceapp.domain.repositories.AuthenticationRepository
 import com.example.e_commerceapp.domain.model.HaroShopException
 import com.google.firebase.FirebaseNetworkException
@@ -13,14 +14,12 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class FirebaseAuthRepositoryImpl @Inject constructor(
-    private val firebaseAuth: FirebaseAuth
+    private val remoteAuthDataSource: RemoteAuthDataSource
 ): AuthenticationRepository {
     override suspend fun logIn(email: String, password: String): Result<FirebaseUser> {
         return try {
-            val result = firebaseAuth
-                .signInWithEmailAndPassword(email,password)
-                .await()
-            Result.success(result.user!!)
+            val user = remoteAuthDataSource.logIn(email, password)
+            Result.success(user)
         }catch (e: HaroShopException.UnableToLogInException){
             Result.failure(e)
         }
@@ -30,9 +29,8 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         password: String
     ):Result<FirebaseUser> {
         return try {
-            val result = firebaseAuth
-                .createUserWithEmailAndPassword(email,password).await()
-            Result.success(result.user!!)
+            val user = remoteAuthDataSource.signUp(email,password)
+            Result.success(user)
         }catch (e: FirebaseAuthUserCollisionException) {
             Result.failure(HaroShopException.ValidationException("Email already exists"))
         } catch (e: FirebaseAuthWeakPasswordException) {
@@ -51,6 +49,6 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
             ))
         }
     }
-    override fun logOut() = firebaseAuth.signOut()
-    override fun getCurrentUser() = firebaseAuth.currentUser
+    override fun logOut() = remoteAuthDataSource.logOut()
+    override fun getCurrentUser() = remoteAuthDataSource.getCurrentUser()
 }

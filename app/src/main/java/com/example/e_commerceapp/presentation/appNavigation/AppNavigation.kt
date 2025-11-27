@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.e_commerceapp.presentation.screens.AboutHaroShopScreen
 import com.example.e_commerceapp.presentation.screens.AllCategoriesScreen
 import com.example.e_commerceapp.presentation.screens.CategoryProductsScreen
 import com.example.e_commerceapp.presentation.screens.ImageSearchScreenWrapper
@@ -131,5 +132,6 @@ fun AppNavigation(navController: NavHostController, viewModel: AuthViewModel = h
         ){
             ImageSearchScreenWrapper()
         }
+        composable("aboutScreen"){ AboutHaroShopScreen() }
     }
 }

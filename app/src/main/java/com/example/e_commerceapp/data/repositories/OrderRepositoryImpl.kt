@@ -1,55 +1,45 @@
 package com.example.e_commerceapp.data.repositories
 
-import com.example.e_commerceapp.core.Utils.ORDER
-import com.example.e_commerceapp.core.Utils.USER_ID
-import com.example.e_commerceapp.data.remote.data.OrderEntity
+import com.example.e_commerceapp.data.local.dataSources.LocalOrderDataSource
 import com.example.e_commerceapp.data.mappers.toDomain
-import com.example.e_commerceapp.data.mappers.toEntity
+import com.example.e_commerceapp.data.remote.dataSources.RemoteAuthDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteOrderDataSource
 import com.example.e_commerceapp.domain.model.Order
 import com.example.e_commerceapp.domain.repositories.OrderRepository
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreException
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class OrderRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val remoteOrderDataSource: RemoteOrderDataSource,
+    private val localOrderDataSource: LocalOrderDataSource,
+    remoteAuthDataSource: RemoteAuthDataSource
 ) : OrderRepository {
-    override suspend fun createOrder(order: Order, userId: String): Result<Unit> {
-        return try {
-            val orderRef = firestore.collection(ORDER).document()
-            val docId = orderRef.id
-            val orderNumber = "ORD-${docId.takeLast(6).uppercase()}"
-            val orderEntity = order.copy(
-                orderId = docId,
-                orderNumber = orderNumber,
-                userId = userId
-            ).toEntity()
-            orderRef.set(orderEntity).await()
-            Result.success(Unit)
-        } catch (e: FirebaseFirestoreException) {
-            Result.failure(e)
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    init {
+        remoteAuthDataSource.getCurrentUser()?.uid?.let{
+            syncBackgroundData(it)
         }
+    }
+    private fun syncBackgroundData(userId: String){
+        scope.launch {
+            remoteOrderDataSource.getAllOrdersForCurrentUser(userId).collect{orders ->
+                val validOrders = orders.filterNotNull()
+                localOrderDataSource.upsertAllOrders(validOrders)
+            }
+        }
+    }
+    override suspend fun createOrder(order: Order, userId: String): Result<Unit> {
+        return remoteOrderDataSource.createOrder(order, userId)
     }
 
     override fun getAllOrdersForCurrentUser(userId: String): Flow<List<Order>> {
-        return callbackFlow {
-            val listener = firestore.collection(ORDER)
-                .whereEqualTo(USER_ID, userId)
-                .addSnapshotListener { snapShot, error ->
-                    if (error != null) {
-                        close(error)
-                        return@addSnapshotListener
-                    }
-                    val orders = snapShot?.toObjects(
-                            OrderEntity::class.java
-                    )?.toDomain() ?: emptyList()
-                    trySend(orders)
-                }
-            awaitClose { listener.remove() }
+        return localOrderDataSource.getAllOrders().map {
+            it.toDomain()
         }
     }
 }

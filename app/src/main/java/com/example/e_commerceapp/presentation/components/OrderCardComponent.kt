@@ -40,13 +40,15 @@ import com.example.e_commerceapp.presentation.theme.DarkBlue
 import com.example.e_commerceapp.presentation.theme.GrayishWhite
 import com.example.e_commerceapp.presentation.theme.Grey1
 import com.example.e_commerceapp.presentation.theme.Grey2
+import com.example.e_commerceapp.presentation.theme.LightRed2
 import com.example.e_commerceapp.presentation.theme.raleWay
 
 @Composable
 fun OrderCardComponent(
     order: Order,
     onTrackClicked:()->Unit,
-    onReviewClicked:()->Unit
+    onReviewClicked:()->Unit,
+    onTicketCLicked:()->Unit
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -192,62 +194,106 @@ fun OrderCardComponent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (order.status != "Delivered") {
-                    Text(
-                        text = order.status,
-                        fontFamily = raleWay,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    ColorfulButton(
-                        text = "Track",
-                        width = 86.dp,
-                        height = 30.dp,
-                        backgroundColor = DarkBlue,
-                        textSize = 16.sp,
-                        textColor = GrayishWhite
-                    ) {
-                        onTrackClicked()
+                when (order.status) {
+                    "UnDelivered" -> {
+                        Row {
+                            Text(
+                                text = order.status,
+                                fontFamily = raleWay,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(LightRed2),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.close),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(8.07.dp,8.61.dp))
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(86.dp, 30.dp)
+                                .border(2.dp, LightRed2, RoundedCornerShape(9.dp))
+                                .background(Color.White)
+                                .clickable {
+                                    onTicketCLicked()
+                                },
+                            contentAlignment = Alignment.Center
+                        ){
+                            Text(
+                                text = "Ticket",
+                                fontFamily = raleWay,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 16.sp,
+                                color = LightRed2
+                            )
+                        }
                     }
-                } else {
-                    Row {
+                    "Delivered" -> {
+                        Row {
+                            Text(
+                                text = order.status,
+                                fontFamily = raleWay,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(DarkBlue),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.icon_feather_check),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(8.07.dp,8.61.dp))
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(86.dp, 30.dp)
+                                .border(2.dp, DarkBlue, RoundedCornerShape(9.dp))
+                                .background(Color.White)
+                                .clickable {
+                                    onReviewClicked()
+                                },
+                            contentAlignment = Alignment.Center
+                        ){
+                            Text(
+                                text = "Review",
+                                fontFamily = raleWay,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 16.sp,
+                                color = DarkBlue
+                            )
+                        }
+                    }
+                    else -> {
                         Text(
                             text = order.status,
                             fontFamily = raleWay,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(22.dp)
-                                .clip(CircleShape)
-                                .background(DarkBlue),
-                            contentAlignment = Alignment.Center
+                        ColorfulButton(
+                            text = "Track",
+                            width = 86.dp,
+                            height = 30.dp,
+                            backgroundColor = DarkBlue,
+                            textSize = 16.sp,
+                            textColor = GrayishWhite
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.icon_feather_check),
-                                contentDescription = null,
-                                modifier = Modifier.size(8.07.dp,8.61.dp))
+                            onTrackClicked()
                         }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(86.dp, 30.dp)
-                            .border(2.dp, DarkBlue, RoundedCornerShape(9.dp))
-                            .background(Color.White)
-                            .clickable {
-                                onReviewClicked()
-                            },
-                        contentAlignment = Alignment.Center
-                    ){
-                        Text(
-                            text = "Review",
-                            fontFamily = raleWay,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 16.sp,
-                            color = DarkBlue
-                        )
                     }
                 }
             }

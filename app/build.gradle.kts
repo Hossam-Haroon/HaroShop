@@ -4,7 +4,6 @@ plugins {
     id("com.google.gms.google-services")
     alias(libs.plugins.google.firebase.crashlytics)
     id("com.google.dagger.hilt.android")
-    kotlin("kapt")
     id ("com.google.devtools.ksp")
 }
 
@@ -64,8 +63,7 @@ dependencies {
     implementation ("com.google.firebase:firebase-crashlytics")
     // hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-compiler:2.51.1")
-    kapt("androidx.hilt:hilt-compiler:1.3.0")
+    ksp("com.google.dagger:hilt-compiler:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation(platform("androidx.compose:compose-bom:2024.04.01"))
 
@@ -128,6 +126,12 @@ dependencies {
     // (If you decide to use Paging later)
     //implementation(libs.androidx.room.paging)
 
+    //workmanager
+    val work_version = "2.9.0"
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+    implementation("androidx.work:work-runtime-ktx:$work_version")
+
 // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -136,5 +140,12 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    testImplementation ("com.google.truth:truth:1.4.5")
+    androidTestImplementation ("com.google.truth:truth:1.4.5")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    androidTestImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("app.cash.turbine:turbine:1.0.0")
+    androidTestImplementation("app.cash.turbine:turbine:1.0.0")
+
 
 }

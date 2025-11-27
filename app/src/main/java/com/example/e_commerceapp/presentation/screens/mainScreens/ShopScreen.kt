@@ -44,6 +44,7 @@ import com.example.e_commerceapp.presentation.components.CategoryCardItem
 import com.example.e_commerceapp.presentation.components.FlashSaleComponent
 import com.example.e_commerceapp.presentation.components.ImageWithContentAndPriceItem
 import com.example.e_commerceapp.presentation.components.MostPopularICardItem
+import com.example.e_commerceapp.presentation.components.MostPopularSectionComponent
 import com.example.e_commerceapp.presentation.components.SeeAllObjectsRow
 import com.example.e_commerceapp.presentation.components.ShopSearchBarComponent
 import com.example.e_commerceapp.presentation.components.ShopSearchButtonToSearchScreen
@@ -56,23 +57,15 @@ import kotlinx.coroutines.launch
 fun ShopScreen(rootNavController:NavController,innerNavController: NavController){
     val shopViewModel : ShopScreenViewModel = hiltViewModel()
     val categories by shopViewModel.categories.collectAsState()
-    val sampleImagesUrl by shopViewModel.sampleImagesUrl.collectAsState()
     val newProducts by shopViewModel.newProducts.collectAsState()
     val flashSaleProducts by shopViewModel.flashSaleProducts.collectAsState()
     val popularProducts by shopViewModel.popularProducts.collectAsState()
     val justForYouProducts by shopViewModel.justForYouProducts.collectAsState()
-    var searchText by remember{ mutableStateOf("")}
     val flashSaleBanners = listOf(
         FlashSaleSlideItem(R.drawable.flash_sale_hupe_second,R.drawable.shirt14_no_background),
         FlashSaleSlideItem(R.drawable.flash_sale_hype_rectangle,R.drawable.flash_sale_hype_watch)
     )
-    LaunchedEffect(Unit) {
-        launch { shopViewModel.getSampleCategories() }
-        launch { shopViewModel.getNewestTenProducts() }
-        launch { shopViewModel.fetchFlashSaleProducts() }
-        launch { shopViewModel.getMostPopularProducts() }
-        launch { shopViewModel.getJustForYouProducts() }
-    }
+
     Column (
         modifier = Modifier
             .padding(horizontal = 5.dp)
@@ -112,16 +105,14 @@ fun ShopScreen(rootNavController:NavController,innerNavController: NavController
                 .height(400.dp)
         ) {
             items(categories) { category ->
-                sampleImagesUrl[category.categoryId]?.let {
-                    CategoryCardItem(
-                        it,
-                        category.categoryName,
-                        category.productCount
-                    ) { categoryName ->
-                        rootNavController.navigate(
-                            Screen.CategoryProductsScreen.createRoute(categoryName)
-                        )
-                    }
+                CategoryCardItem(
+                    category.thumbnailSampleImagesId,
+                    category.categoryName,
+                    category.productCount
+                ) { categoryName ->
+                    rootNavController.navigate(
+                        Screen.CategoryProductsScreen.createRoute(categoryName)
+                    )
                 }
             }
         }
@@ -135,10 +126,10 @@ fun ShopScreen(rootNavController:NavController,innerNavController: NavController
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            items(newProducts.takeLast(5)) { pair ->
-                pair.first?.let {
+            items(newProducts.takeLast(5)) { product ->
+                product.let {
                     ImageWithContentAndPriceItem(
-                        pair.second, it.description,
+                        it.productImage, it.description,
                         it.productPrice.toString(),
                         135.dp, 135.dp,
                         130.dp, 130.dp
@@ -187,27 +178,10 @@ fun ShopScreen(rootNavController:NavController,innerNavController: NavController
         }
         Spacer(modifier = Modifier.height(20.dp))
         if (popularProducts.isNotEmpty()) {
-            SeeAllObjectsRow("Most Popular") {}
-            Spacer(modifier = Modifier.height(13.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(popularProducts.takeLast(5)) { product ->
-                    Log.d("ProfileScreen", "$product")
-                    MostPopularICardItem(product.productImage, product.favouriteCount) {
-                        rootNavController.navigate(
-                            Screen.ProductScreen.createRouteForKnownProduct(
-                                product.productId,
-                                0,
-                                "none",
-                                1
-                            )
-                        )
-                    }
-                }
-            }
+            MostPopularSectionComponent(
+                popularProducts = popularProducts,
+                rootNavController = rootNavController
+            )
         }
         Spacer(modifier = Modifier.height(20.dp))
         Row(
@@ -258,6 +232,5 @@ fun ShopScreen(rootNavController:NavController,innerNavController: NavController
             }
         }
         Spacer(modifier = Modifier.height(10.dp))
-
     }
 }

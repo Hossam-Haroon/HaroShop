@@ -2,6 +2,7 @@ package com.example.e_commerceapp.data.local.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.google.common.primitives.Booleans
 
 @Entity(tableName = "products")
 data class ProductDbEntity(
