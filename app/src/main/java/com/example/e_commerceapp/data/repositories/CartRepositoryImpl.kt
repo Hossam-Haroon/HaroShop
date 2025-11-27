@@ -1,71 +1,70 @@
 package com.example.e_commerceapp.data.repositories
 
-import com.example.e_commerceapp.core.Utils.CART
-import com.example.e_commerceapp.core.Utils.CART_AMOUNT
-import com.example.e_commerceapp.core.Utils.CHOSEN_AMOUNT
-import com.example.e_commerceapp.core.Utils.USER
-import com.example.e_commerceapp.data.remote.data.CartEntity
+
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.e_commerceapp.data.local.data.CartDbEntity
+import com.example.e_commerceapp.data.local.dataSources.LocalCartDataSource
+import com.example.e_commerceapp.data.mappers.toDbEntity
 import com.example.e_commerceapp.data.mappers.toDomain
+import com.example.e_commerceapp.data.remote.dataSources.RemoteAuthDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteCartDataSource
+import com.example.e_commerceapp.data.remote.dataSources.RemoteImageDataSource
+import com.example.e_commerceapp.data.workers.CartSyncWorker
 import com.example.e_commerceapp.domain.model.Cart
 import com.example.e_commerceapp.domain.model.HaroShopException
 import com.example.e_commerceapp.domain.model.Product
 import com.example.e_commerceapp.domain.repositories.CartRepository
-import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.firebase.firestore.Transaction
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class CartRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val remoteCartDataSource: RemoteCartDataSource,
+    private val localCartDataSource: LocalCartDataSource,
+    private val remoteImageDataSource: RemoteImageDataSource,
+    authDataSource: RemoteAuthDataSource,
+    private val workManager: WorkManager
 ) : CartRepository {
-    override fun getAllCartItems(userId: String): Flow<List<Cart>> {
-        return callbackFlow {
-            val listener = firestore.collection(USER).document(userId).collection(CART)
-                .addSnapshotListener { snapShot, error ->
-                    if (error != null) {
-                        close(error)
-                        return@addSnapshotListener
-                    }
-                    val cartProducts = snapShot?.toObjects(
-                        CartEntity::class.java
-                    )?.toDomain() ?: emptyList()
-                    trySend(cartProducts)
-                }
-            awaitClose { listener.remove() }
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    init {
+        authDataSource.getCurrentUser()?.uid?.let {
+            syncBackgroundData(it)
         }
     }
 
-    override suspend fun deleteItemFromCart(
-        cartProduct: Cart,
-        userId: String
-    ) {
-        try {
-            firestore.collection(USER).document(userId).collection(CART)
-                .document(
-                    "${cartProduct.productId}_${cartProduct.color}_${cartProduct.size}"
-                )
-                .delete()
-                .await()
-        } catch (e: FirebaseFirestoreException) {
-            throw HaroShopException.UnableToDeleteItem("unable to make a cart")
+    private fun syncBackgroundData(userId: String) {
+        scope.launch {
+            remoteCartDataSource.getAllCartItems(userId).collect { carts ->
+                val imagesIds = carts.map { it.productImage }
+                val imagesMap = remoteImageDataSource.getImageUrls(imagesIds)
+                val cartsDbEntity = carts.map {
+                    val back4appInfo = imagesMap[it.productImage]
+                    it.toDbEntity(back4appInfo?.imageUrl ?: "")
+                }
+                localCartDataSource.upsertAllCarts(cartsDbEntity)
+            }
+        }
+    }
+
+    override fun getAllCartItems(userId: String): Flow<List<Cart>> {
+        return localCartDataSource.getAllCarts().map {
+            it.toDomain()
         }
     }
 
     override suspend fun updateCartQuantity(userId: String, cartProduct: Cart, quantity: Int) {
         try {
-            firestore.collection(USER)
-                .document(userId)
-                .collection(CART)
-                .document(
-                    "${cartProduct.productId}_${cartProduct.color}_${cartProduct.size}"
-                )
-                .update(CART_AMOUNT, quantity)
+            remoteCartDataSource.updateCartQuantity(userId, cartProduct, quantity)
         } catch (e: FirebaseFirestoreException) {
             throw HaroShopException.UnableToUpdateDocumentWithModel("unable to upgrade cart amount")
         }
@@ -73,22 +72,28 @@ class CartRepositoryImpl @Inject constructor(
 
     override suspend fun deleteAllProductsInCart(userId: String): Result<Unit> {
         return try {
-            val cartCollection = firestore.collection(USER)
-                .document(userId)
-                .collection(CART)
-            val cartSnapShot = cartCollection.get().await()
-            if (cartSnapShot.isEmpty) {
-                return Result.success(Unit)
-            }
-            val batch = firestore.batch()
-            for (doc in cartSnapShot.documents) {
-                batch.delete(doc.reference)
-            }
-            batch.commit().await()
-            Result.success(Unit)
+            remoteCartDataSource.deleteAllProductsInCart(userId)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun deleteItemFromCart(
+        cartProduct: Cart
+    ) {
+        val cartToBeDeleted = CartDbEntity(
+            cartProduct.productId,
+            cartProduct.productAmount,
+            cartProduct.color,
+            cartProduct.size,
+            cartProduct.productImage,
+            cartProduct.description,
+            cartProduct.productPrice,
+            cartProduct.category,
+            isDeleted = true
+        )
+        localCartDataSource.insertOrUpdateCart(cartToBeDeleted)
+        scheduleCartSync()
     }
 
     override suspend fun insertProductToCart(
@@ -96,71 +101,36 @@ class CartRepositoryImpl @Inject constructor(
         productAmount: Int,
         productColor: Long,
         productSize: String,
-        userId: String,
-        category:String
+        category: String
     ) {
-        val documentRef = firestore.collection(USER)
-            .document(userId)
-            .collection(CART)
-            .document(
-                "${product.productId}_${productColor}_$productSize"
-            )
-        firestore.runTransaction { transaction ->
-            val snapshot = transaction.get(documentRef)
-            val cart = CartEntity(
-                product.productId,
-                productAmount,
-                productColor,
-                productSize,
-                product.productImage,
-                product.description,
-                product.productPrice.toFloat(),
-                category
-            )
-            checkIfCartAlreadyExistsOrNotToSetOrUpdate(
-                snapshot,
-                transaction,
-                cart,
-                documentRef,
-                productAmount
-            )
-        }
+        val uniqueCartId = "${product.productId}_${productColor}_$productSize"
+        val unSyncedCart = CartDbEntity(
+            uniqueCartId,
+            productAmount,
+            productColor,
+            productSize,
+            product.productImage,
+            product.description,
+            product.productPrice.toFloat(),
+            product.productType,
+            isSynced = false,
+            isDeleted = false
+        )
+        localCartDataSource.insertOrUpdateCart(unSyncedCart)
+        scheduleCartSync()
     }
 
-    private fun checkIfCartAlreadyExistsOrNotToSetOrUpdate(
-        snapshot: DocumentSnapshot,
-        transaction: Transaction,
-        cart: CartEntity,
-        documentRef: DocumentReference,
-        productAmount: Int
-    ) {
-        if (snapshot.exists()) {
-            val existingCart = snapshot.toObject(CartEntity::class.java)?.toDomain()
-            if (existingCart != null) {
-                checkIfCartSnapShotHasSameFieldsAsAddedOneOrNot(
-                    cart,
-                    existingCart,
-                    transaction,
-                    documentRef,
-                    productAmount
-                )
-            }
-        } else {
-            transaction.set(documentRef, cart)
-        }
-    }
-
-    private fun checkIfCartSnapShotHasSameFieldsAsAddedOneOrNot(
-        cart: CartEntity,
-        existingCart: Cart,
-        transaction: Transaction,
-        documentRef: DocumentReference,
-        productAmount: Int
-    ) {
-        if (cart.toDomain() == existingCart) {
-            throw HaroShopException.ProductAlreadyInCart("Product already exists in")
-        } else {
-            transaction.update(documentRef, mapOf(CHOSEN_AMOUNT to productAmount))
-        }
+    private fun scheduleCartSync() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val syncRequest = OneTimeWorkRequestBuilder<CartSyncWorker>()
+            .setConstraints(constraints)
+            .build()
+        workManager.enqueueUniqueWork(
+            "cart_sync",
+            ExistingWorkPolicy.REPLACE,
+            syncRequest
+        )
     }
 }

@@ -8,7 +8,7 @@ import javax.inject.Inject
 class GetMostPopularProductsUseCase @Inject constructor(
     private val productRepository: ProductRepository
 ) {
-    operator fun invoke(): Flow<Result<List<Product>>> {
+    operator fun invoke(): Flow<List<Product>> {
         return productRepository.getMostPopularProducts()
     }
 }

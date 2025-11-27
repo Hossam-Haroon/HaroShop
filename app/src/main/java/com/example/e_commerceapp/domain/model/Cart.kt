@@ -1,6 +1,6 @@
 package com.example.e_commerceapp.domain.model
 
-data class Cart(
+data class  Cart(
     val productId : String = "",
     val productAmount : Int = 0,
     val color : Long = 0,

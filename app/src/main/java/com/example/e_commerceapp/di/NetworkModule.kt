@@ -16,7 +16,6 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(): Retrofit {
         return Retrofit.Builder()
-            // 👇 PASTE YOUR NEW URL RIGHT HERE
             .baseUrl("https://haroshop-payment-backend.hosamharon2016.workers.dev/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()

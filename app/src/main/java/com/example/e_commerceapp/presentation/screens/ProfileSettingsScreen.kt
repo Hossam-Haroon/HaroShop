@@ -1,6 +1,7 @@
 package com.example.e_commerceapp.presentation.screens
 
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,21 +58,22 @@ import kotlin.coroutines.coroutineContext
 @Composable
 fun ProfileSettingsScreen() {
     val profileSettingsViewModel: ProfileSettingsScreenViewModel = hiltViewModel()
+    val userData by profileSettingsViewModel.userData.collectAsState()
     val userImageUrl by profileSettingsViewModel.imageUrl.collectAsState()
     val userName by profileSettingsViewModel.userName.collectAsState()
     val userEmail by profileSettingsViewModel.userEmail.collectAsState()
     val userPhoneNumber by profileSettingsViewModel.userPhoneNumber.collectAsState()
-    var mutableUserName by remember { mutableStateOf(userName) }
-    var mutableUserEmail by remember { mutableStateOf(userEmail) }
-    var mutableUserPhoneNumber by remember { mutableStateOf(userPhoneNumber) }
-    var mutableUserImage by remember { mutableStateOf(userImageUrl?.toUri()) }
+    var mutableUserName by remember { mutableStateOf(userData?.userName) }
+    var mutableUserEmail by remember { mutableStateOf(userData?.email) }
+    var mutableUserPhoneNumber by remember { mutableStateOf(userData?.phoneNumber) }
+    var mutableUserImage by remember { mutableStateOf(userData?.imageUrl?.toUri()) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? -> mutableUserImage = uri }
-    LaunchedEffect(Unit) {
-        launch { profileSettingsViewModel.getUserProfileById() }
+    LaunchedEffect(userData) {
+
     }
     Column(
         modifier = Modifier
@@ -151,29 +153,36 @@ fun ProfileSettingsScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ProfileSettingsTextFields(
-                    value = mutableUserName,
-                    hint = "Enter Your Name",
-                    onValueChange = {
-                        mutableUserName = it
-                    }
-                )
+                mutableUserName?.let {
+                    ProfileSettingsTextFields(
+                        value = it,
+                        hint = "Enter Your Name",
+                        onValueChange = {
+                            mutableUserName = it
+                        }
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(10.dp))
-                ProfileSettingsTextFields(
-                    value = mutableUserEmail,
-                    hint = "Type Your Email",
-                    onValueChange = {
-                        mutableUserEmail = it
-                    }
-                )
+                mutableUserEmail?.let {
+                    ProfileSettingsTextFields(
+                        value = it,
+                        hint = "Type Your Email",
+                        onValueChange = {
+                            mutableUserEmail = it
+                        }
+                    )
+                }
                 Spacer(modifier = Modifier.height(10.dp))
-                ProfileSettingsTextFields(
-                    value = mutableUserPhoneNumber,
-                    hint = "Type Your PhoneNumber",
-                    onValueChange = {
-                        mutableUserPhoneNumber = it
-                    }
-                )
+                mutableUserPhoneNumber?.let {
+                    ProfileSettingsTextFields(
+                        value = it,
+                        hint = "Type Your PhoneNumber",
+                        onValueChange = {
+                            mutableUserPhoneNumber = it
+                        }
+                    )
+                }
             }
         }
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -189,12 +198,18 @@ fun ProfileSettingsScreen() {
                     val imageUrl = mutableUserImage?.let {
                         profileSettingsViewModel.uploadImage(it, context)
                     }
-                    profileSettingsViewModel.updateUserData(
-                        mutableUserEmail,
-                        mutableUserPhoneNumber,
-                        mutableUserName,
-                        imageUrl
-                    )
+                    mutableUserEmail?.let { email ->
+                        mutableUserPhoneNumber?.let { phoneNumber ->
+                            mutableUserName?.let { userName ->
+                                profileSettingsViewModel.updateUserData(
+                                    email,
+                                    phoneNumber,
+                                    userName,
+                                    imageUrl
+                                )
+                            }
+                        }
+                    }
                     Toast.makeText(
                         context,
                         "updated Successfully!",

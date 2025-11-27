@@ -8,7 +8,6 @@ import com.example.e_commerceapp.domain.model.User
 import com.example.e_commerceapp.domain.usecases.imageHandlerUseCases.UploadImageUseCase
 import com.example.e_commerceapp.domain.usecases.paymentUseCases.CreateCustomerIdUseCase
 import com.example.e_commerceapp.domain.usecases.userUseCases.CreateUserUseCase
-import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -37,5 +37,8 @@ object Utils {
     const val USER_PHONE_NUMBER = "phoneNumber"
     const val VOUCHER_COLLECTION = "vouchers"
     const val VOUCHER_TYPE = "type"
+    const val TICKET_COLLECTION = "tickets"
+    const val MESSAGE_COLLECTION = "messages"
+    const val TIME_STAMP = "timeStamp"
 
 }

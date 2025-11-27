@@ -9,18 +9,9 @@ import com.google.firebase.firestore.FieldValue
 import javax.inject.Inject
 
 class DeleteReviewAndUpdateUserReviewsIdUseCase @Inject constructor(
-    private val authenticationRepository: AuthenticationRepository,
-    private val userRepository: UserRepository,
     private val reviewRepository: ReviewRepository
 ) {
     suspend operator fun invoke(review: Review, productId:String){
-        val userId = authenticationRepository.getCurrentUser()?.uid
-            ?: throw IllegalStateException("User must be logged in")
         reviewRepository.deleteReview(review,productId)
-        userRepository.updateUser(
-            userId, mapOf(
-                USER_REVIEWS_ID to FieldValue.arrayRemove(review.reviewId)
-            )
-        )
     }
 }

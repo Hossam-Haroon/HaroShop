@@ -1,6 +1,5 @@
 package com.example.e_commerceapp.presentation.screens.mainScreens
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,13 +14,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,7 +31,6 @@ import com.example.e_commerceapp.presentation.components.MostPopularSectionCompo
 import com.example.e_commerceapp.presentation.components.WishListComponent
 import com.example.e_commerceapp.presentation.theme.raleWay
 import com.example.e_commerceapp.presentation.viewmodels.WishListScreenViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun WishListScreen(rootNavController: NavController) {
@@ -43,14 +38,6 @@ fun WishListScreen(rootNavController: NavController) {
     val recentlyViewedProductsUrl by viewModel.recentlyViewedProducts.collectAsState()
     val popularProducts by viewModel.popularProducts.collectAsState()
     val likedProducts by viewModel.likedProducts.collectAsState()
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        launch { viewModel.getRecentlyViewedProductsFromUserCollection() }
-        launch { viewModel.getMostPopularProducts() }
-        launch { viewModel.fetchAllFavouriteProducts() }
-    }
     Column(
         modifier = Modifier.padding(horizontal = 10.dp)
     ) {
@@ -107,7 +94,7 @@ fun WishListScreen(rootNavController: NavController) {
                             )
                         },
                         onCLick = {},
-                        onDelete = {viewModel.deleteFavouriteProduct(product.productId)}
+                        onDelete = {viewModel.unlikeProduct(product.productId)}
                     )
                 }
             }

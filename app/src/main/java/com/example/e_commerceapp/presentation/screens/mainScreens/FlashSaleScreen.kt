@@ -45,21 +45,10 @@ import kotlinx.coroutines.launch
 fun FlashSaleScreen(rootNavController: NavController) {
     val flashSaleViewModel: FlashSaleScreenViewModel = hiltViewModel()
     val discountValues by flashSaleViewModel.discountValues.collectAsState()
+    val selectedDiscount by flashSaleViewModel.selectedDiscount.collectAsState()
     val popularProducts by flashSaleViewModel.popularProducts.collectAsState()
     val isLoading by flashSaleViewModel.isLoading.collectAsState()
     val productsWithSpecificDiscount by flashSaleViewModel.productsWithDiscount.collectAsState()
-    var discountValue by remember {
-        mutableStateOf("10")
-    }
-    LaunchedEffect(Unit) {
-        launch { flashSaleViewModel.getAllDiscountValues() }
-        launch { flashSaleViewModel.getMostPopularProducts() }
-        launch { flashSaleViewModel.selectDiscount(discountValue) }
-        /* launch {
-             flashSaleViewModel.getProductsWithSpecificDiscount(discountValue)
-             Log.d("FlashScreen","$productsWithSpecificDiscount")
-         }*/
-    }
     Image(
         painter = painterResource(
             id = R.drawable.bubbles_flash_sale
@@ -90,19 +79,17 @@ fun FlashSaleScreen(rootNavController: NavController) {
         )
         Spacer(modifier = Modifier.height(20.dp))
         DiscountValuesRowSectionComponent(
-            discountValue = discountValue,
+            discountValue = selectedDiscount,
             discountValues = discountValues,
             onAllSelect = {
-                discountValue = "All"
                 flashSaleViewModel.selectDiscount("All")
             },
             onDiscountValueSelect = { discount ->
-                discountValue = discount.discountValue
                 flashSaleViewModel.selectDiscount(discount.discountValue)
             }
         )
         Spacer(modifier = Modifier.height(25.dp))
-        if (discountValue == "All") {
+        if (selectedDiscount == "All") {
             Text(
                 text = "All Discounts",
                 fontFamily = raleWay,
@@ -111,7 +98,7 @@ fun FlashSaleScreen(rootNavController: NavController) {
             )
         } else {
             Text(
-                text = "$discountValue% Discount",
+                text = "$selectedDiscount% Discount",
                 fontFamily = raleWay,
                 fontSize = 21.sp,
                 fontWeight = FontWeight.Bold
@@ -168,7 +155,9 @@ fun FlashSaleScreen(rootNavController: NavController) {
             }
         }
         Spacer(modifier = Modifier.height(20.dp))
-        PopularProductsSection(popularProducts, rootNavController)
+        if (popularProducts.isNotEmpty()){
+            PopularProductsSection(popularProducts, rootNavController)
+        }
         Spacer(modifier = Modifier.height(20.dp))
     }
 }

@@ -13,6 +13,7 @@ import com.example.e_commerceapp.presentation.screens.AboutHaroShopScreen
 import com.example.e_commerceapp.presentation.screens.ActivityScreen
 import com.example.e_commerceapp.presentation.screens.HistoryScreen
 import com.example.e_commerceapp.presentation.screens.PaymentScreen
+import com.example.e_commerceapp.presentation.screens.ProfileSettingsScreen
 import com.example.e_commerceapp.presentation.screens.SettingsScreen
 import com.example.e_commerceapp.presentation.screens.ToReceiveScreen
 import com.example.e_commerceapp.presentation.screens.VouchersScreen
@@ -38,8 +39,8 @@ fun MainScreen(rootNavController: NavController){
             composable("activityScreen"){ ActivityScreen(navController) }
             composable("historyScreen"){ HistoryScreen(navController) }
             composable("voucherScreen"){ VouchersScreen() }
-            composable("aboutScreen"){ AboutHaroShopScreen() }
             composable("settingsScreen"){ SettingsScreen(navController) }
+            composable("profileSettingsScreen"){ ProfileSettingsScreen() }
         }
     }
 }

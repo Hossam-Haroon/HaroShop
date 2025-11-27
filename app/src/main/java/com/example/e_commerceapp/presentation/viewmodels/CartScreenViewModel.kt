@@ -2,100 +2,90 @@ package com.example.e_commerceapp.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.e_commerceapp.core.Utils.BACK4APP_PRODUCTS_CLASS
 import com.example.e_commerceapp.domain.model.Cart
 import com.example.e_commerceapp.domain.model.Product
 import com.example.e_commerceapp.domain.usecases.cartUseCases.DeleteItemFromCartUseCase
 import com.example.e_commerceapp.domain.usecases.cartUseCases.GetAllCartItemsUseCase
-import com.example.e_commerceapp.domain.usecases.cartUseCases.InsertProductToCartUseCase
 import com.example.e_commerceapp.domain.usecases.cartUseCases.UpdateCartAmountUseCase
-import com.example.e_commerceapp.domain.usecases.imageHandlerUseCases.GetUploadedImageUseCase
+import com.example.e_commerceapp.domain.usecases.productUseCases.GetAllFavouriteProductsIdsUseCase
 import com.example.e_commerceapp.domain.usecases.productUseCases.GetMostPopularProductsUseCase
 import com.example.e_commerceapp.domain.usecases.productUseCases.GetProductByIdUseCase
-import com.example.e_commerceapp.domain.usecases.productUseCases.ToggleFavouriteProductsUseCase
-import com.example.e_commerceapp.domain.usecases.userUseCases.GetFavouriteProductsUseCase
+import com.example.e_commerceapp.domain.usecases.productUseCases.UnLikeProductUseCase
 import com.example.e_commerceapp.domain.usecases.userUseCases.GetUserAddressUseCase
 import com.example.e_commerceapp.domain.usecases.userUseCases.UpdateUserAddressUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class CartScreenViewModel @Inject constructor(
-    private val getFavouriteProductsUseCase: GetFavouriteProductsUseCase,
-    private val getMostPopularProductsUseCase: GetMostPopularProductsUseCase,
+    getAllFavouriteProductsIdsUseCase: GetAllFavouriteProductsIdsUseCase,
+    getMostPopularProductsUseCase: GetMostPopularProductsUseCase,
     private val getProductByIdUseCase: GetProductByIdUseCase,
-    private val getUploadedImageUseCase: GetUploadedImageUseCase,
     private val updateUserAddressUseCase: UpdateUserAddressUseCase,
-    private val getUserAddressUseCase: GetUserAddressUseCase,
-    private val getAllCartItemsUseCase: GetAllCartItemsUseCase,
-    private val insertProductToCartUseCase: InsertProductToCartUseCase,
+    getUserAddressUseCase: GetUserAddressUseCase,
+    getAllCartItemsUseCase: GetAllCartItemsUseCase,
     private val deleteItemFromCartUseCase: DeleteItemFromCartUseCase,
-    private val toggleFavouriteProductsUseCase: ToggleFavouriteProductsUseCase,
+    private val unLikeProductUseCase: UnLikeProductUseCase,
     private val updateCartAmountUseCase: UpdateCartAmountUseCase
 ) : ViewModel() {
-    private var _likedProducts = MutableStateFlow<List<Product>>(emptyList())
-    val likedProducts = _likedProducts.asStateFlow()
-    private var _popularProducts = MutableStateFlow<List<Product>>(emptyList())
-    val popularProducts = _popularProducts.asStateFlow()
-    private var _cartProducts = MutableStateFlow<List<Cart>>(emptyList())
-    val cartProducts = _cartProducts.asStateFlow()
-    private var _userAddress = MutableStateFlow("")
-    val userAddress = _userAddress.asStateFlow()
-
-    fun fetchFavouriteProductsSamples() {
-        viewModelScope.launch {
-            getFavouriteProductsUseCase().collect { productsIds ->
-                if (productsIds.isEmpty()) {
-                    _likedProducts.value = emptyList()
-                    return@collect
-                }
-                val favouriteProducts = coroutineScope {
-                    val sampleProductsId = productsIds.takeLast(5)
-                    sampleProductsId.map { id ->
-                        async {
-                            val product = getProductByIdUseCase(id)
-                            if (product != null) {
-                                val imageUrl = getUploadedImageUseCase(
-                                    product.productImage,
-                                    BACK4APP_PRODUCTS_CLASS
-                                ) ?: ""
-                                product.copy(productImage = imageUrl)
-                            } else null
-                        }
-                    }.awaitAll().filterNotNull()
-                }
-                _likedProducts.value = favouriteProducts
-            }
-        }
-    }
-
-    fun getMostPopularProducts() {
-        viewModelScope.launch {
-            getMostPopularProductsUseCase().collect { result ->
-                result.onSuccess { products ->
-                    val productsWithImageUrls = products.map { product ->
-                        async {
-                            product.copy(
-                                productImage = getUploadedImageUseCase(
-                                    product.productImage, BACK4APP_PRODUCTS_CLASS
-                                ) ?: ""
-                            )
-                        }
-                    }.awaitAll()
-                    _popularProducts.value = productsWithImageUrls
-                }.onFailure {
-                    _popularProducts.value = emptyList()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val likedProducts : StateFlow<List<Product?>> =
+        getAllFavouriteProductsIdsUseCase().flatMapLatest { wishListProduct ->
+            if (wishListProduct.isEmpty()){
+                flowOf(emptyList())
+            }else{
+                flow {
+                    val sampleProductsId = wishListProduct.map { it.productId }.takeLast(5)
+                    val products = coroutineScope {
+                        sampleProductsId.map { id ->
+                            async {
+                                getProductByIdUseCase(id).first()
+                            }
+                        }.awaitAll()
+                    }
+                    emit(products)
                 }
             }
-        }
-    }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
+    val popularProducts : StateFlow<List<Product>> = getMostPopularProductsUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
+    val cartProducts : StateFlow<List<Cart>> = getAllCartItemsUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
+    val totalPrice : StateFlow<Float> = cartProducts.map { carts ->
+        carts.sumOf { it.productPrice.toDouble()}.toFloat()
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = 0f
+    )
+    val userAddress: StateFlow<String> = getUserAddressUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = ""
+    )
 
     fun updateUserAddress(address: String) {
         viewModelScope.launch {
@@ -103,42 +93,9 @@ class CartScreenViewModel @Inject constructor(
         }
     }
 
-    fun getUserAddress() {
-        viewModelScope.launch {
-            getUserAddressUseCase().collect{address ->
-                _userAddress.value = address
-            }
-        }
-    }
-
-    fun getAllCartItems() {
-        viewModelScope.launch {
-            getAllCartItemsUseCase().catch {
-                _cartProducts.value = emptyList()
-            }.collect { cartProducts ->
-                val cartProductsWithImagesUrl = cartProducts.map { cart ->
-                    async {
-                        cart.copy(
-                            productImage = getUploadedImageUseCase(
-                                cart.productImage, BACK4APP_PRODUCTS_CLASS
-                            ) ?: ""
-                        )
-                    }
-                }.awaitAll()
-                _cartProducts.value = cartProductsWithImagesUrl
-            }
-        }
-    }
-
-    fun insertProductToCart(product: Product, amount: Int, size: String, color: Long,category:String) {
-        viewModelScope.launch {
-            insertProductToCartUseCase(product, amount, color, size,category)
-        }
-    }
-
     fun deleteFavouriteProduct(productId: String) {
         viewModelScope.launch {
-            toggleFavouriteProductsUseCase(productId)
+            unLikeProductUseCase(productId)
         }
     }
 
@@ -150,7 +107,7 @@ class CartScreenViewModel @Inject constructor(
         }
     }
 
-    fun updateCartAmount(cartProduct: Cart,amount: Int){
+    fun updateCartAmount(cartProduct: Cart, amount: Int) {
         viewModelScope.launch {
             updateCartAmountUseCase(cartProduct, amount)
         }

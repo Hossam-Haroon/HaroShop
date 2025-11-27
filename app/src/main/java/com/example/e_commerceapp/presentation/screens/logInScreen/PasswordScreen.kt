@@ -23,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -123,9 +122,4 @@ fun PasswordScreen(email:String, onNavigateToProfileScreen:()->Unit){
             fontWeight = FontWeight.Light
         )
     }
-}
-@Preview(showBackground = true)
-@Composable
-fun PasswordScreenPreview() {
-    PasswordScreen(""){}
 }

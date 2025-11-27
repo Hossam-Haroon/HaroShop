@@ -7,14 +7,8 @@ import com.example.e_commerceapp.domain.repositories.CartRepository
 import javax.inject.Inject
 
 class DeleteItemFromCartUseCase @Inject constructor(
-    private val cartRepository: CartRepository,
-    private val authenticationRepository: AuthenticationRepository
+    private val cartRepository: CartRepository
 ) {
-    suspend operator fun invoke(
-        cartProduct: Cart
-    ) {
-        val userId = authenticationRepository.getCurrentUser()?.uid
-            ?: throw IllegalStateException("User must be logged in")
-        cartRepository.deleteItemFromCart(cartProduct, userId)
-    }
+    suspend operator fun invoke(cartProduct: Cart) = cartRepository.deleteItemFromCart(cartProduct)
+
 }

@@ -7,12 +7,9 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class GetAllUserVouchersUseCase @Inject constructor(
-    private val vouchersRepository: VouchersRepository,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val vouchersRepository: VouchersRepository
 ) {
     operator fun invoke(): Flow<List<Voucher>> {
-        val userId  = getCurrentUserUseCase()?.uid
-            ?: throw IllegalStateException("User must be logged in")
-        return vouchersRepository.getAllUserVouchers(userId)
+        return vouchersRepository.getAllUserVouchers()
     }
 }

@@ -10,48 +10,37 @@ import com.example.e_commerceapp.domain.usecases.userUseCases.UpdateUserAddressA
 import com.example.e_commerceapp.domain.usecases.userUseCases.UpdateUserAddressUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ContactInformationViewModel @Inject constructor(
-    private val getUserAddressUseCase: GetUserAddressUseCase,
+    getUserAddressUseCase: GetUserAddressUseCase,
     private val updateUserAddressUseCase: UpdateUserAddressUseCase,
-    private val getUserPhoneNumberUseCase: GetUserPhoneNumberUseCase,
-    private val getUserEmailUseCase: GetUserEmailUseCase,
+    getUserPhoneNumberUseCase: GetUserPhoneNumberUseCase,
+    getUserEmailUseCase: GetUserEmailUseCase,
     private val updateUserAddressAndPhoneNumberUseCase: UpdateUserAddressAndPhoneNumberUseCase,
-): ViewModel() {
-    private var _userAddress = MutableStateFlow("")
-    val userAddress = _userAddress.asStateFlow()
-    private var _userPhoneNumber = MutableStateFlow("")
-    val userPhoneNumber = _userPhoneNumber.asStateFlow()
-    private var _userEmail = MutableStateFlow("")
-    val userEmail = _userEmail.asStateFlow()
-
-    fun getUserAddress() {
-        viewModelScope.launch {
-            getUserAddressUseCase().collect{address ->
-                _userAddress.value = address
-            }
-        }
-    }
-
-    fun getUserPhoneNumber(){
-        viewModelScope.launch {
-            getUserPhoneNumberUseCase().collect{phoneNumber ->
-                _userPhoneNumber.value = phoneNumber
-            }
-        }
-    }
-
-    fun getUserEmail(){
-        viewModelScope.launch {
-            getUserEmailUseCase().collect{email ->
-                _userEmail.value = email
-            }
-        }
-    }
+) : ViewModel() {
+    val userAddress: StateFlow<String> = getUserAddressUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = ""
+    )
+    val userPhoneNumber: StateFlow<String> = getUserPhoneNumberUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = ""
+    )
+    val userEmail: StateFlow<String> = getUserEmailUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = ""
+    )
 
     fun updateUserAddress(address: String) {
         viewModelScope.launch {
@@ -59,7 +48,7 @@ class ContactInformationViewModel @Inject constructor(
         }
     }
 
-    fun updateUserContactInformation(email:String,phoneNumber:String){
+    fun updateUserContactInformation(email: String, phoneNumber: String) {
         viewModelScope.launch {
             updateUserAddressAndPhoneNumberUseCase(email, phoneNumber)
         }

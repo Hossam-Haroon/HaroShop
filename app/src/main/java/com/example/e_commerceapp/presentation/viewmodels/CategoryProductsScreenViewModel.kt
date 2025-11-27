@@ -1,5 +1,6 @@
 package com.example.e_commerceapp.presentation.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.e_commerceapp.core.Utils.BACK4APP_PRODUCTS_CLASS
@@ -16,26 +17,23 @@ import javax.inject.Inject
 @HiltViewModel
 class CategoryProductsScreenViewModel @Inject constructor(
     private val getProductByCategoryUseCase: GetProductByCategoryUseCase,
-    private val getUploadedImageUseCase: GetUploadedImageUseCase
+    private val savedStateHandle: SavedStateHandle
 ):ViewModel() {
+    val categoryName = savedStateHandle.get<String>("categoryName") ?: ""
     private var _products = MutableStateFlow<List<Product>>(emptyList())
     val products = _products.asStateFlow()
     private var _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
-    fun getAllProducts(productType : String){
+    init {
+        getAllProducts(categoryName)
+    }
+    private fun getAllProducts(productType : String){
         viewModelScope.launch {
             _isLoading.value = true
             getProductByCategoryUseCase(productType).catch {
                 _products.value = emptyList()
             }.collect{ products ->
-                val updatedProductsWithImagesUrl = products.map { product ->
-                    product.copy(
-                        productImage = getUploadedImageUseCase(
-                            product.productImage,BACK4APP_PRODUCTS_CLASS
-                        ) ?: ""
-                    )
-                }
-                _products.value = updatedProductsWithImagesUrl
+                _products.value = products
                 _isLoading.value = false
             }
         }

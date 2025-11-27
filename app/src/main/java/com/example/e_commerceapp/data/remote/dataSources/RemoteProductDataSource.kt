@@ -1,12 +1,11 @@
 package com.example.e_commerceapp.data.remote.dataSources
 
+
 import com.example.e_commerceapp.core.Utils.PRODUCT
 import com.example.e_commerceapp.data.mappers.toEntity
 import com.example.e_commerceapp.data.remote.data.ProductEntity
-import com.example.e_commerceapp.domain.model.HaroShopException
 import com.example.e_commerceapp.domain.model.Product
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -34,27 +33,15 @@ class RemoteProductDataSource @Inject constructor(
     }
 
     suspend fun createProduct(product: Product) {
-        try {
-            val documentId = firestore.collection(PRODUCT).document()
-            val userEntity = product.copy(productId = documentId.id).toEntity()
-            documentId.set(userEntity).await()
-        } catch (e: FirebaseFirestoreException) {
-            HaroShopException.UnableToCreateDocumentForModel(
-                "unable to create product"
-            )
-        }
+        val documentId = firestore.collection(PRODUCT).document()
+        val userEntity = product.copy(productId = documentId.id).toEntity()
+        documentId.set(userEntity).await()
     }
 
     suspend fun updateProduct(productId: String, data: Map<String, Any>) {
-        try {
-            firestore.collection(PRODUCT)
-                .document(productId)
-                .update(data)
-                .await()
-        } catch (e: FirebaseFirestoreException) {
-            HaroShopException.UnableToUpdateDocumentWithModel(
-                "unable to update product with the entered data."
-            )
-        }
+        firestore.collection(PRODUCT)
+            .document(productId)
+            .update(data)
+            .await()
     }
 }

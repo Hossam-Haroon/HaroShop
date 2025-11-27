@@ -16,7 +16,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -30,8 +32,7 @@ class SearchScreenViewModel @Inject constructor(
     private val getSearchedProductsUseCase: GetSearchedProductsUseCase,
     private val addSearchKeywordToDatastoreUseCase: AddSearchKeywordToDatastoreUseCase,
     private val clearSearchHistoryUseCase: ClearSearchHistoryUseCase,
-    private val justForYouProductsUseCase: JustForYouProductsUseCase,
-    private val getUploadedImageUseCase: GetUploadedImageUseCase,
+    justForYouProductsUseCase: JustForYouProductsUseCase,
     searchPreferencesRepository: SearchPreferencesRepository
 ) : ViewModel() {
     private var _query = MutableStateFlow("")
@@ -43,8 +44,11 @@ class SearchScreenViewModel @Inject constructor(
         SharingStarted.Lazily,
         emptyList()
     )
-    private var _discoverSectionProducts = MutableStateFlow<List<Product>>(emptyList())
-    val discoverSectionProducts = _discoverSectionProducts.asStateFlow()
+    val discoverSectionProducts : StateFlow<List<Product>> = justForYouProductsUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
 
     init {
         viewModelScope.launch {
@@ -71,39 +75,19 @@ class SearchScreenViewModel @Inject constructor(
 
     private fun searchProducts(query: String) {
         viewModelScope.launch {
-            val productsWithImageUrl = getSearchedProductsUseCase(query).map { product ->
-                async {
-                    product.copy(
-                        productImage = getUploadedImageUseCase(
-                            product.productImage, BACK4APP_PRODUCTS_CLASS
-                        ) ?: ""
-                    )
-                }
-            }.awaitAll()
-            _searchResults.value = productsWithImageUrl
+            getSearchedProductsUseCase(query)
+                .catch {
+                    _searchResults.value = emptyList()
+                }.collect{products ->
+                _searchResults.value = products
+            }
+
         }
     }
 
     fun clearSearchHistory() {
         viewModelScope.launch {
             clearSearchHistoryUseCase()
-        }
-    }
-
-    fun getDiscoverSectionProducts() {
-        viewModelScope.launch {
-            justForYouProductsUseCase().collect {products ->
-                val productsWithImageUrl = products.map { product ->
-                    async {
-                        product.copy(
-                            productImage = getUploadedImageUseCase(
-                                product.productImage, BACK4APP_PRODUCTS_CLASS
-                            ) ?: ""
-                        )
-                    }
-                }.awaitAll()
-                _discoverSectionProducts.value = productsWithImageUrl
-            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.e_commerceapp.data.mappers
 
+import com.example.e_commerceapp.data.local.data.UserDbEntity
 import com.example.e_commerceapp.data.remote.data.UserEntity
 import com.example.e_commerceapp.domain.model.User
 
@@ -32,6 +33,22 @@ fun User.toEntity(): UserEntity {
         imageUrl,
         userAddress,
         stripeCustomerId
+    )
+}
+
+fun UserEntity.toDbEntity():UserDbEntity{
+    return UserDbEntity(
+        userId, userName, email, phoneNumber,
+        accountRole, recentlyViewed, favoriteProducts,
+        reviewsId, imageUrl, userAddress, stripeCustomerId
+    )
+}
+
+fun UserDbEntity.toDomain():User{
+    return User(
+        userId, email, userName, phoneNumber,
+        favoriteProducts, accountRole, recentlyViewed,
+        reviewsId, imageUrl, userAddress,stripeCustomerId
     )
 }
 

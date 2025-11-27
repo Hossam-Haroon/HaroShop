@@ -13,63 +13,44 @@ import com.example.e_commerceapp.domain.usecases.orderUseCases.GetCategoriesTota
 import com.example.e_commerceapp.domain.usecases.userUseCases.GetUserByIdUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ActivityScreenViewModel @Inject constructor(
-    private val getCategoriesTotalUseCase: GetCategoriesTotalUseCase,
+    getCategoriesTotalUseCase: GetCategoriesTotalUseCase,
     private val getUserByIdUseCase: GetUserByIdUseCase,
-    private val getImageIdForFetching: GetImageIdForFetching,
     private val getAllOrdersForCurrentUserUseCase: GetAllOrdersForCurrentUserUseCase
 ):ViewModel() {
-    private val _categoryTotals = MutableStateFlow<Map<String, Float>>(emptyMap())
-    val categoryTotals = _categoryTotals.asStateFlow()
-    private var _imageUrl = MutableStateFlow<String?>(null)
-    val imageUrl = _imageUrl.asStateFlow()
+    val categoryTotals : StateFlow<Map<String,Float>> = getCategoriesTotalUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyMap()
+    )
     private var _ordersSize = MutableStateFlow(0)
     val ordersSize = _ordersSize.asStateFlow()
     private var _receivedOrdersSize = MutableStateFlow(0)
     val receivedOrdersSize = _receivedOrdersSize.asStateFlow()
     private var _toReceiveOrdersSize = MutableStateFlow(0)
     val toReceiveOrdersSize = _toReceiveOrdersSize.asStateFlow()
-    private var _userData = MutableStateFlow<User?>(
-        User(
-            "", "", "",
-            "", emptyList(), "", emptyList(), emptyList(), null,
-            ""
-        )
+    val userData : StateFlow<User?> = flow {
+        emit(getUserByIdUseCase())
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = null
     )
-    val userData = _userData.asStateFlow()
-
-    fun loadUserOrdersStats(){
-        viewModelScope.launch {
-            getCategoriesTotalUseCase().catch {
-                _categoryTotals.value = emptyMap()
-            }.collect{
-                _categoryTotals.value = it
-            }
-        }
+    init {
+        getTotalNumberForAllOrdersUserHasDone()
     }
 
-    fun getUserProfileById() {
-        viewModelScope.launch {
-            _userData.value = getUserByIdUseCase()
-            val imageUrl = userData.value?.let {
-                getImageIdForFetching(
-                    it.userId,
-                    USER,
-                    USER_IMAGE_URL,
-                    BACK4APP_USER_CLASS
-                )
-            }
-            _imageUrl.value = imageUrl
-        }
-    }
-
-    fun getTotalNumberForAllOrdersUserHasDone(){
+    private fun getTotalNumberForAllOrdersUserHasDone(){
         viewModelScope.launch {
             getAllOrdersForCurrentUserUseCase().catch {
                 _ordersSize.value = 0

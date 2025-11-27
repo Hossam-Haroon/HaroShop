@@ -1,6 +1,5 @@
 package com.example.e_commerceapp.presentation.screens
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +16,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -33,32 +31,24 @@ import com.example.e_commerceapp.presentation.appNavigation.Screen
 import com.example.e_commerceapp.presentation.components.CategoryCardItem
 import com.example.e_commerceapp.presentation.theme.raleWay
 import com.example.e_commerceapp.presentation.viewmodels.AllCategoriesScreenViewModel
-import kotlinx.coroutines.launch
 
 @Composable
-fun AllCategoriesScreen(navController:NavController){
-    val allCategoriesScreenViewModel : AllCategoriesScreenViewModel = hiltViewModel()
-    val imagesUrl by allCategoriesScreenViewModel.imagesUrl.collectAsState()
+fun AllCategoriesScreen(navController: NavController) {
+    val allCategoriesScreenViewModel: AllCategoriesScreenViewModel = hiltViewModel()
     val categories by allCategoriesScreenViewModel.categories.collectAsState()
-    LaunchedEffect(Unit) {
-        launch {
-            allCategoriesScreenViewModel.getAllCategories()
-        Log.d("AllCategoriesScreen","${categories}/n ${imagesUrl}")}
-    }
     Column(
         modifier = Modifier
             .padding(horizontal = 5.dp)
             .padding(bottom = 5.dp)
-            .fillMaxSize()
-        ,
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(10.dp))
-        Row (
+        Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
-        ){
+        ) {
             Text(
                 text = "All Categories",
                 fontSize = 28.sp,
@@ -79,17 +69,15 @@ fun AllCategoriesScreen(navController:NavController){
         LazyVerticalGrid(
             columns = GridCells.Fixed(2)
         ) {
-            items(categories){category ->
-                imagesUrl[category.categoryId]?.let {
-                    CategoryCardItem(
-                        sampleImagesUrl = it,
-                        categoryName = category.categoryName,
-                        productNumbers = category.productCount
-                    ) {categoryName ->
-                        navController.navigate(
-                            Screen.CategoryProductsScreen.createRoute(categoryName)
-                        )
-                    }
+            items(categories) { category ->
+                CategoryCardItem(
+                    sampleImagesUrl = category.thumbnailSampleImagesId,
+                    categoryName = category.categoryName,
+                    productNumbers = category.productCount
+                ) { categoryName ->
+                    navController.navigate(
+                        Screen.CategoryProductsScreen.createRoute(categoryName)
+                    )
                 }
             }
         }

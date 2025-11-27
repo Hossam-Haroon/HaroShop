@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.map
 
 class SearchPreferencesRepositoryImpl(private val context:Context): SearchPreferencesRepository {
 
-
     override val searchHistory = context.searchDataStore.data.map { preferences ->
         preferences[SEARCH_HISTORY_KEY]?.toList()?.reversed() ?: emptyList()
     }

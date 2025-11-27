@@ -1,5 +1,6 @@
 package com.example.e_commerceapp.data.mappers
 
+import com.example.e_commerceapp.data.local.data.CategoryDbEntity
 import com.example.e_commerceapp.data.remote.data.CategoryEntity
 import com.example.e_commerceapp.domain.model.Category
 
@@ -13,6 +14,7 @@ fun Category.toEntity(): CategoryEntity {
         categoryId, categoryName, productCount, thumbnailSampleImagesId
     )
 }
+
 
 fun List<Category>.toEntity():List<CategoryEntity> = this.map { it.toEntity() }
 fun List<CategoryEntity>.toDomain():List<Category> = this.map { it.toDomain() }

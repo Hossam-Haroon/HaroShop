@@ -35,24 +35,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun HistoryScreen(innerNavController: NavController) {
     val historyViewModel: HistoryViewModel = hiltViewModel()
-    val userImageUrl by historyViewModel.imageUrl.collectAsState()
+    val userData by historyViewModel.userData.collectAsState()
     val orderItems by historyViewModel.orderItems.collectAsState()
     val orderItemsReviewState by historyViewModel.orderProductsReviewState.collectAsState()
-    val currentUser by historyViewModel.currentUser.collectAsState()
     var openReviewBottomSheet by remember { mutableStateOf(false) }
     var clickedProductToReview by remember { mutableStateOf<OrderItem?>(null) }
     var reviewRate by remember { mutableIntStateOf(0) }
     var reviewText by remember { mutableStateOf("") }
     var itemOrderNumber by remember { mutableStateOf("") }
     val context = LocalContext.current
-    LaunchedEffect(Unit) {
-        //launch { historyViewModel.getUserProfileById() }
-        launch { historyViewModel.getCurrentUserDataForReview() }
-        launch {
-            historyViewModel.getAllOrderItems()
-            //historyViewModel.checkOrderProductsReviewExistence(orderItems.toOrderItem())
-        }
-    }
     Column(
         modifier = Modifier
             .padding(horizontal = 10.dp)
@@ -61,7 +52,7 @@ fun HistoryScreen(innerNavController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(30.dp))
-        ScreenHeadSectionComponent(userImageUrl, "History"){
+        ScreenHeadSectionComponent(userData?.imageUrl, "History"){
             innerNavController.navigate(Screen.VoucherScreen.route)
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -96,10 +87,10 @@ fun HistoryScreen(innerNavController: NavController) {
                     reviewText = text
                 },
                 onSetReview = { productId ->
-                    val review = currentUser?.let { user ->
+                    val review = userData?.let { user ->
                         Review(
                             reviewId = "",
-                            userId = currentUser!!.userId,
+                            userId = user.userId,
                             userRate = reviewRate,
                             reviewText = reviewText,
                             userImage = user.imageUrl ?: "",

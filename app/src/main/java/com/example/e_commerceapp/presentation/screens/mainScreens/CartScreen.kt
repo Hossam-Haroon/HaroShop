@@ -63,6 +63,7 @@ fun CartScreen(rootNavController: NavController,innerNavController:NavController
     val likedProducts by cartViewModel.likedProducts.collectAsState()
     val cartProducts by cartViewModel.cartProducts.collectAsState()
     val userAddress by cartViewModel.userAddress.collectAsState()
+    val totalPrice by cartViewModel.totalPrice.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteCartDialog by remember { mutableStateOf(false) }
     var editableAddress by remember { mutableStateOf(userAddress) }
@@ -76,16 +77,6 @@ fun CartScreen(rootNavController: NavController,innerNavController:NavController
         mutableStateOf<Product?>(null)
     }
     val context = LocalContext.current
-    var totalPrice = 0f
-    for (product in cartProducts) {
-        totalPrice += product.productPrice
-    }
-    LaunchedEffect(Unit) {
-        launch { cartViewModel.getMostPopularProducts() }
-        launch { cartViewModel.fetchFavouriteProductsSamples() }
-        launch { cartViewModel.getAllCartItems() }
-        launch { cartViewModel.getUserAddress() }
-    }
     Scaffold(bottomBar = {
         CartCheckOutBottomBar(
             "Checkout",
@@ -188,25 +179,27 @@ fun CartScreen(rootNavController: NavController,innerNavController:NavController
             if (likedProducts.isNotEmpty()) {
                 LazyColumn(modifier = Modifier.height(280.dp)) {
                     items(likedProducts) { product ->
-                        WishListComponent(
-                            imageUrl = product.productImage,
-                            product = product,
-                            onNavigateClick = {
-                                rootNavController.navigate(
-                                    Screen.ProductScreen.createRouteForKnownProduct(
-                                        product.productId,
-                                        0,
-                                        "none",
-                                        1
+                        product?.let {
+                            WishListComponent(
+                                imageUrl = it.productImage,
+                                product = product,
+                                onNavigateClick = {
+                                    rootNavController.navigate(
+                                        Screen.ProductScreen.createRouteForKnownProduct(
+                                            it.productId,
+                                            0,
+                                            "none",
+                                            1
+                                        )
                                     )
-                                )
-                            },
-                            onCLick = {},
-                            onDelete = {
-                                favouriteProductRequiredToBeDeleted = product
-                                showDeleteFavouriteProductDialog = true
-                            }
-                        )
+                                },
+                                onCLick = {},
+                                onDelete = {
+                                    favouriteProductRequiredToBeDeleted = product
+                                    showDeleteFavouriteProductDialog = true
+                                }
+                            )
+                        }
                     }
                 }
             }

@@ -1,6 +1,5 @@
 package com.example.e_commerceapp.presentation.screens
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -21,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,10 +35,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.e_commerceapp.R
-import com.example.e_commerceapp.domain.model.Order
 import com.example.e_commerceapp.domain.model.OrderAddress
-import com.example.e_commerceapp.domain.model.OrderItem
-import com.example.e_commerceapp.domain.model.VoucherType
 import com.example.e_commerceapp.presentation.appNavigation.Screen
 import com.example.e_commerceapp.presentation.components.AddressBoxComponent
 import com.example.e_commerceapp.presentation.components.AddressEditDialogComponent
@@ -57,10 +52,8 @@ import com.example.e_commerceapp.presentation.components.SucceededPaymentDialogC
 import com.example.e_commerceapp.presentation.components.VouchersBottomSheet
 import com.example.e_commerceapp.presentation.theme.raleWay
 import com.example.e_commerceapp.presentation.utils.Utils.EXPRESS_PAYMENT
-import com.example.e_commerceapp.presentation.utils.Utils.EXPRESS_PRICE
 import com.example.e_commerceapp.presentation.utils.Utils.EXPRESS_SHIPPING_DURATION
 import com.example.e_commerceapp.presentation.utils.Utils.STANDARD_PAYMENT
-import com.example.e_commerceapp.presentation.utils.Utils.STANDARD_PRICE
 import com.example.e_commerceapp.presentation.utils.Utils.STANDARD_SHIPPING_DURATION
 import com.example.e_commerceapp.presentation.viewmodels.ContactInformationViewModel
 import com.example.e_commerceapp.presentation.viewmodels.PaymentProcessViewModel
@@ -118,13 +111,6 @@ fun PaymentScreen(rootNavController: NavController,innerNavController: NavContro
             }
         }
         paymentProcessViewModel.onPaymentFlowFinished()
-    }
-    LaunchedEffect(Unit) {
-        launch { paymentScreenViewModel.getAllCartItems() }
-        launch { contactInformationViewModel.getUserAddress() }
-        launch { contactInformationViewModel.getUserEmail() }
-        launch { contactInformationViewModel.getUserPhoneNumber() }
-        launch { paymentProcessViewModel.loadSavedCards() }
     }
     LaunchedEffect (userAddress,userPhoneNumber,userEmail){
         editableAddress = userAddress
@@ -196,7 +182,6 @@ fun PaymentScreen(rootNavController: NavController,innerNavController: NavContro
                 cartProducts.size.toString(),
                 onVoucherClick = {
                     showVouchersBottomSheet = true
-                    paymentScreenViewModel.getAllUserVouchers()
                 },
                 onVoucherCancel = {
                     paymentScreenViewModel.resetPriceAfterCancelingVoucher()

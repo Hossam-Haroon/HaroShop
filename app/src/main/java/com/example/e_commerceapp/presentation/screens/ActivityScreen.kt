@@ -47,19 +47,14 @@ import kotlinx.coroutines.launch
 fun ActivityScreen(innerNavController: NavController) {
     val activityViewModel: ActivityScreenViewModel = hiltViewModel()
     val userOrdersStats by activityViewModel.categoryTotals.collectAsState()
-    val userImageUrl by activityViewModel.imageUrl.collectAsState()
     val ordersSize by activityViewModel.ordersSize.collectAsState()
+    val userData by activityViewModel.userData.collectAsState()
     val receivedOrders by activityViewModel.receivedOrdersSize.collectAsState()
     val toReceiveOrders by activityViewModel.toReceiveOrdersSize.collectAsState()
     val categoryList = userOrdersStats.keys.toList()
     val colors = generateDistinctColors(categoryList.size)
     val categoryColors = categoryList.zip(colors).toMap()
 
-    LaunchedEffect(Unit) {
-        launch { activityViewModel.loadUserOrdersStats() }
-        launch { activityViewModel.getUserProfileById() }
-        launch { activityViewModel.getTotalNumberForAllOrdersUserHasDone() }
-    }
     Column(
         modifier = Modifier
             .padding(horizontal = 10.dp)
@@ -68,7 +63,7 @@ fun ActivityScreen(innerNavController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(30.dp))
-        ScreenHeadSectionComponent(userImageUrl,"My Activity"){
+        ScreenHeadSectionComponent(userData?.imageUrl,"My Activity"){
             innerNavController.navigate(Screen.VoucherScreen.route)
         }
         Spacer(modifier = Modifier.height(60.dp))

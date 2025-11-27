@@ -43,7 +43,6 @@ fun ProfileSettingsTextFields(
             ),
             modifier = Modifier
                 .padding(horizontal = 10.dp)
-                .fillMaxSize()
         )
         if (value.isEmpty()){
             Text(
@@ -54,7 +53,6 @@ fun ProfileSettingsTextFields(
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier
                     .padding(horizontal = 10.dp)
-                    .fillMaxSize(),
             )
         }
     }

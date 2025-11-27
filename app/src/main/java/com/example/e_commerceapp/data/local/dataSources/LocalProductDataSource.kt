@@ -9,6 +9,14 @@ class LocalProductDataSource @Inject constructor(
     private val productDao: ProductDao
 ) {
     fun getPopularProducts() = productDao.getPopularProducts()
+    fun getProductsWithLimit(limit:Long) = productDao.getProductsWithLimit(limit)
+    fun getSearchedProducts(keyword:String): Flow<List<ProductDbEntity>> {
+        val searchQuery = "%${keyword}%"
+        return productDao.getSearchedProducts(searchQuery)
+    }
+    fun getProductsWithSpecificDiscountValue(discount:Int):Flow<List<ProductDbEntity>> {
+        return productDao.getProductsWithSpecificDiscountValue(discount)
+    }
     fun getNewestTenProducts() = productDao.getNewestTenProducts()
     fun getCategoryProducts(category:String) = productDao.getProductsForCategory(category)
     fun getFlashSaleProducts(limit:Long?): Flow<List<ProductDbEntity>> {
