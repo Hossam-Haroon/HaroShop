@@ -1,7 +1,5 @@
 package com.example.e_commerceapp.data.repositories
 
-import android.content.Context
-import android.util.Log
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -19,9 +17,7 @@ import com.example.e_commerceapp.domain.model.HaroShopException
 import com.example.e_commerceapp.domain.model.Product
 import com.example.e_commerceapp.domain.model.WishListProduct
 import com.example.e_commerceapp.domain.repositories.ProductRepository
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestoreException
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -57,7 +53,7 @@ class ProductRepositoryImpl @Inject constructor(
                     }
                     localProductDataSource.upsertProducts(dbEntities)
                 } catch (e: Exception) {
-                    Log.e("ProductRepo", "Error processing product sync", e)
+                    throw e
                 }
             }
         }
@@ -67,7 +63,7 @@ class ProductRepositoryImpl @Inject constructor(
         try {
             remoteProductDataSource.createProduct(product)
         } catch (e: FirebaseFirestoreException) {
-            HaroShopException.UnableToCreateDocumentForModel(
+            throw HaroShopException.UnableToCreateDocumentForModel(
                 "unable to create product"
             )
         }
@@ -77,7 +73,7 @@ class ProductRepositoryImpl @Inject constructor(
         try {
             remoteProductDataSource.updateProduct(productId, data)
         } catch (e: FirebaseFirestoreException) {
-            HaroShopException.UnableToUpdateDocumentWithModel(
+            throw HaroShopException.UnableToUpdateDocumentWithModel(
                 "unable to update product with the entered data."
             )
         }

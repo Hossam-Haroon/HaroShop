@@ -146,6 +146,11 @@ dependencies {
     androidTestImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("app.cash.turbine:turbine:1.0.0")
     androidTestImplementation("app.cash.turbine:turbine:1.0.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
+    testImplementation(kotlin("test"))
+    testImplementation ("io.mockk:mockk:1.12.0")
+    androidTestImplementation ("io.mockk:mockk-android:1.12.0")
+    testImplementation("org.robolectric:robolectric:4.10.3")
 
 
 }
