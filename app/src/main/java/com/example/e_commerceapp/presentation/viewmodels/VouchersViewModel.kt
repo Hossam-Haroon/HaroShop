@@ -24,7 +24,7 @@ class VouchersViewModel @Inject constructor(
     private val getUserByIdUseCase: GetUserByIdUseCase,
     getAllUserVouchersUseCase: GetAllUserVouchersUseCase
 ):ViewModel() {
-    val userData : StateFlow<User?> = flow { emit(getUserByIdUseCase()) }.stateIn(
+    val userData : StateFlow<User?> = getUserByIdUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = null

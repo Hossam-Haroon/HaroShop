@@ -6,7 +6,7 @@ sealed class Screen(val route: String) {
     data object LogIn : Screen("logIn")
     data object Hello : Screen("hello")
     data object Ready : Screen("ready")
-    data object Password : Screen("password") {
+    data object Password : Screen("password/{email}") {
         fun createRoute(email: String) = "${Password.route}/$email"
     }
     data object MainScreen : Screen("main")

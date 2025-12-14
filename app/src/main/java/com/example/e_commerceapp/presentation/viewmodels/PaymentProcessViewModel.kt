@@ -18,6 +18,7 @@ import com.example.e_commerceapp.domain.usecases.userUseCases.GetUserByIdUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,7 +55,7 @@ class PaymentProcessViewModel @Inject constructor(
     fun loadSavedCards() {
         viewModelScope.launch {
             if (_stripeCustomerId == null) {
-                _stripeCustomerId = getUserByIdUseCase()?.stripeCustomerId
+                _stripeCustomerId = getUserByIdUseCase().first()?.stripeCustomerId
             }
             _stripeCustomerId?.let {
                 getListCardsUseCase(it).onSuccess { cards ->

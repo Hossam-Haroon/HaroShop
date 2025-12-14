@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.e_commerceapp.R
 import com.example.e_commerceapp.presentation.components.ColorfulButton
+import com.example.e_commerceapp.presentation.components.CustomGrayFieldForPassword
 import com.example.e_commerceapp.presentation.components.CustomGrayTextField
 import com.example.e_commerceapp.presentation.theme.BlueishWhite
 import com.example.e_commerceapp.presentation.theme.DarkBlue
@@ -39,7 +40,7 @@ import com.example.e_commerceapp.presentation.viewmodels.PasswordViewModel
 fun PasswordScreen(email:String, onNavigateToProfileScreen:()->Unit){
     val authViewModel : AuthViewModel = hiltViewModel()
     val passwordViewModel : PasswordViewModel = hiltViewModel()
-    val userName = passwordViewModel.userName.collectAsState()
+    val userName by passwordViewModel.userName.collectAsState()
     val context = LocalContext.current
     var password by remember {
         mutableStateOf("")
@@ -90,7 +91,7 @@ fun PasswordScreen(email:String, onNavigateToProfileScreen:()->Unit){
             fontWeight = FontWeight.Medium
         )
         Spacer(modifier = Modifier.height(40.dp))
-        CustomGrayTextField(
+        CustomGrayFieldForPassword(
             hintText = "Password",
             textValue = password,
             width = 335.dp,

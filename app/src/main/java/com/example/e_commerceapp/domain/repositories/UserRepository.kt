@@ -10,7 +10,7 @@ interface UserRepository {
     suspend fun getUserReviewIds(userId: String): Flow<List<String>>
     suspend fun updateUser(userId: String, data: Map<String, Any>)
     suspend fun deleteUser(userId: String)
-    suspend fun getCurrentUser(): User?
+    fun getCurrentUser(): Flow<User?>
     fun getRecentlyViewedProductIdsFromUserCollection(userId: String): Flow<List<String>?>
     suspend fun addLastViewedProductIdToRecentlyViewedFieldInUserDocument(productId: String)
     suspend fun getDocumentRefOfTheUser(): DocumentReference?

@@ -37,9 +37,7 @@ class ProfileSettingsScreenViewModel @Inject constructor(
     private var _userPhoneNumber = MutableStateFlow("")
     val userPhoneNumber = _userPhoneNumber.asStateFlow()
 
-    val userData : StateFlow<User?> = flow {
-        emit(getUserByIdUseCase())
-    }.stateIn(
+    val userData : StateFlow<User?> = getUserByIdUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = null
@@ -61,7 +59,7 @@ class ProfileSettingsScreenViewModel @Inject constructor(
         }
     }
 
-    fun getUserProfileById() {
+    /*fun getUserProfileById() {
         viewModelScope.launch {
             val user = getUserByIdUseCase()
             Log.d("ProfileScreen","$user")
@@ -72,6 +70,5 @@ class ProfileSettingsScreenViewModel @Inject constructor(
                 _userPhoneNumber.value = it.phoneNumber
                 _imageUrl.value = it.imageUrl
             }
-        }
-    }
+        }*/
 }

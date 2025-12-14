@@ -6,6 +6,6 @@ interface AuthenticationRepository {
 
     suspend fun logIn(email:String,password:String):Result<FirebaseUser>
     suspend fun signUp(email:String,password: String):Result<FirebaseUser>
-    fun logOut()
+    suspend fun logOut()
     fun getCurrentUser():FirebaseUser?
 }

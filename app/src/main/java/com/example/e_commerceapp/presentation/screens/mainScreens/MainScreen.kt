@@ -39,7 +39,7 @@ fun MainScreen(rootNavController: NavController){
             composable("activityScreen"){ ActivityScreen(navController) }
             composable("historyScreen"){ HistoryScreen(navController) }
             composable("voucherScreen"){ VouchersScreen() }
-            composable("settingsScreen"){ SettingsScreen(navController) }
+            composable("settingsScreen"){ SettingsScreen(navController,rootNavController) }
             composable("profileSettingsScreen"){ ProfileSettingsScreen() }
         }
     }

@@ -85,9 +85,7 @@ class ProductScreenViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = false
     )
-    val currentUser: StateFlow<User?> = flow {
-        emit(getCurrentUserByIdUseCase())
-    }.stateIn(
+    val currentUser: StateFlow<User?> = getCurrentUserByIdUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = null

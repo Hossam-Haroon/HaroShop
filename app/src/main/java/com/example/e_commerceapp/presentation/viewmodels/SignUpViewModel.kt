@@ -40,4 +40,36 @@ class SignUpViewModel @Inject constructor(
             }
         }
     }
+    suspend fun completeUserSetup(
+        userAuthUid: String,
+        email: String,
+        userName: String,
+        fullPhoneNumber: String,
+        imageUri: Uri?,
+        context: Context
+    ): Result<Unit> {
+        return try {
+            val imageUrl = imageUri?.let {
+                uploadImageUseCase(it, context)
+            }
+            val customerId = createCustomerIdUseCase(email).getOrThrow()
+            val user = User(
+                userId = userAuthUid,
+                email = email,
+                userName = userName,
+                phoneNumber = fullPhoneNumber,
+                favoriteProducts = emptyList(),
+                imageUrl = imageUrl,
+                stripeCustomerId = customerId,
+                recentlyViewed = emptyList(),
+                reviewsId = emptyList(),
+                userAddress = "",
+                accountRole = "user"
+            )
+            createUserUseCase(user)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

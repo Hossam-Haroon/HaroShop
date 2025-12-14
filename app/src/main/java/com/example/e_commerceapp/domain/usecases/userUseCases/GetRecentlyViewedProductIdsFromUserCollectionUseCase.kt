@@ -3,6 +3,7 @@ package com.example.e_commerceapp.domain.usecases.userUseCases
 import com.example.e_commerceapp.domain.repositories.AuthenticationRepository
 import com.example.e_commerceapp.domain.repositories.UserRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class GetRecentlyViewedProductIdsFromUserCollectionUseCase
@@ -11,8 +12,15 @@ class GetRecentlyViewedProductIdsFromUserCollectionUseCase
     private val authenticationRepository: AuthenticationRepository
 ) {
     operator fun invoke(): Flow<List<String>?> {
-        val userId  = authenticationRepository.getCurrentUser()?.uid
-            ?: throw IllegalStateException("User must be logged in")
-        return userRepository.getRecentlyViewedProductIdsFromUserCollection(userId)
+        return flow {
+            val userId  = authenticationRepository.getCurrentUser()?.uid
+            if (userId == null){
+                emit(emptyList())
+            }else{
+                userRepository.getRecentlyViewedProductIdsFromUserCollection(userId).collect{
+                    emit(it)
+                }
+            }
+        }
     }
 }

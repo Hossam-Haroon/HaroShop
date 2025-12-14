@@ -1,5 +1,6 @@
 package com.example.e_commerceapp.presentation.appNavigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -26,6 +27,7 @@ import com.example.e_commerceapp.presentation.viewmodels.AuthViewModel
 @Composable
 fun AppNavigation(navController: NavHostController, viewModel: AuthViewModel = hiltViewModel()){
     val userState = viewModel.getCurrentUser()
+    Log.d("checkUserUid","${userState?.uid}")
     val checkStartDestination = 
         if (userState == null) Screen.Introduction.route else Screen.MainScreen.route
     NavHost(navController = navController, startDestination = checkStartDestination) {
@@ -58,7 +60,7 @@ fun AppNavigation(navController: NavHostController, viewModel: AuthViewModel = h
         }
         composable(route = Screen.LogIn.route){
             LogInScreen { name ->
-                navController.navigate(Screen.Password.createRoute(name))
+                navController.navigate("password/$name")
             }
         }
         composable(

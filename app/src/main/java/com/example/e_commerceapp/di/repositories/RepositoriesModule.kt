@@ -61,8 +61,16 @@ object RepositoriesModule {
 
     @Provides
     @Singleton
-    fun getAuthRepoImpl(remoteAuthDataSource: RemoteAuthDataSource): AuthenticationRepository {
-        return FirebaseAuthRepositoryImpl(remoteAuthDataSource)
+    fun getAuthRepoImpl(
+        remoteAuthDataSource: RemoteAuthDataSource,
+        localUserDataSource: LocalUserDataSource,
+        localOrderDataSource: LocalOrderDataSource
+    ): AuthenticationRepository {
+        return FirebaseAuthRepositoryImpl(
+            remoteAuthDataSource,
+            localUserDataSource,
+            localOrderDataSource
+        )
     }
 
     @Provides

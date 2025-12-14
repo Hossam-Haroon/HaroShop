@@ -27,13 +27,10 @@ class ReviewSyncWorker @AssistedInject constructor(
     private val auth: FirebaseAuth
 ): CoroutineWorker(context,workerParameters) {
     override suspend fun doWork(): Result {
-        Log.d("ReviewSyncWorker", "doWork() STARTED.")
         val userId = auth.currentUser?.uid
         if (userId.isNullOrEmpty()){
-            Log.e("ReviewSyncWorker", "FATAL: User is NULL. Worker is failing.")
             return Result.failure()
         }
-        Log.d("ReviewSyncWorker", "User ID $userId found. Starting sync.")
         try {
             val userRef = firestore.collection(USER).document(userId)
             reviewDao.getReviewToBeDeleted()?.let {

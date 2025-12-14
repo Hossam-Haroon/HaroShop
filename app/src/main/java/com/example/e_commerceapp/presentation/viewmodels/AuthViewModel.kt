@@ -22,7 +22,7 @@ class AuthViewModel @Inject constructor(
 ): ViewModel(){
     private var _userState  = MutableStateFlow<Result<FirebaseUser>?>(null)
     val userState = _userState.asStateFlow()
-    private var _isLoading = MutableStateFlow<Boolean>(false)
+    private var _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
     fun logOutUser(){
         viewModelScope.launch { logOutUseCase() }

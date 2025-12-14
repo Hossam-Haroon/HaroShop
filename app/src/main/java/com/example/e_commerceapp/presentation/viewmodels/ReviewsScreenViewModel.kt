@@ -40,9 +40,7 @@ class ReviewsScreenViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
-    val currentUser : StateFlow<User?> = flow {
-        emit(getUserByIdUseCase())
-    }.stateIn(
+    val currentUser : StateFlow<User?> = getUserByIdUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = null

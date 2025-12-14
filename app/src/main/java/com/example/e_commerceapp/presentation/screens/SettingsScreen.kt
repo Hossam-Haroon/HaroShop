@@ -14,17 +14,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.e_commerceapp.presentation.appNavigation.Screen
 import com.example.e_commerceapp.presentation.components.PersonalSectionComponent
 import com.example.e_commerceapp.presentation.components.SettingsSingleFieldComponent
 import com.example.e_commerceapp.presentation.theme.LightRed2
 import com.example.e_commerceapp.presentation.theme.raleWay
+import com.example.e_commerceapp.presentation.viewmodels.AuthViewModel
 
 @Composable
 fun SettingsScreen(
-    innerNavController: NavController
+    innerNavController: NavController,
+    rootNavController: NavController
 ) {
+    val authViewModel : AuthViewModel = hiltViewModel()
     Column(
         modifier = Modifier
             .padding(horizontal = 10.dp)
@@ -68,7 +72,9 @@ fun SettingsScreen(
             innerNavController.navigate(Screen.AboutHaroShopScreen.route)
         }
         SettingsSingleFieldComponent(fieldName = "Log Out") {
-            // show dialog to log out
+            authViewModel.logOutUser()
+            rootNavController.popBackStack()
+            rootNavController.navigate("introduction")
         }
         Spacer(modifier = Modifier.height(40.dp))
         Text(

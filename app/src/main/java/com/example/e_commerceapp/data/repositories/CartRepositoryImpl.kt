@@ -45,12 +45,7 @@ class CartRepositoryImpl @Inject constructor(
     private fun syncBackgroundData(userId: String) {
         scope.launch {
             remoteCartDataSource.getAllCartItems(userId).collect { carts ->
-                val imagesIds = carts.map { it.productImage }
-                val imagesMap = remoteImageDataSource.getImageUrls(imagesIds)
-                val cartsDbEntity = carts.map {
-                    val back4appInfo = imagesMap[it.productImage]
-                    it.toDbEntity(back4appInfo?.imageUrl ?: "")
-                }
+                val cartsDbEntity = carts.map { it.toDbEntity() }
                 localCartDataSource.upsertAllCarts(cartsDbEntity)
             }
         }

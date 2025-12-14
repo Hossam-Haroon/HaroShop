@@ -1,5 +1,6 @@
 package com.example.e_commerceapp.data.repositories
 
+import android.util.Log
 import com.example.e_commerceapp.core.Utils.BACK4APP_USER_CLASS
 import com.example.e_commerceapp.data.mappers.toDomain
 import com.example.e_commerceapp.core.Utils.FAVOURITE_PRODUCTS
@@ -20,8 +21,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,21 +38,35 @@ class UserRepositoryImpl @Inject constructor(
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     init {
-        authDataSource.getCurrentUser()?.uid?.let {
-            syncCurrentUser(it)
+        scope.launch {
+            authDataSource.observeAuthState().collect { firebaseUser ->
+                if (firebaseUser != null) {
+                    syncCurrentUser(firebaseUser.uid)
+                } else {
+                    localUserDataSource.deleteCurrentUser()
+                }
+            }
         }
     }
 
     private fun syncCurrentUser(userId: String) {
         scope.launch {
             remoteUserDataSource.getCurrentUser(userId).collect { userEntity ->
-                val imageId = userEntity?.imageUrl ?: ""
-                val imageUrl = remoteImageDataSource.getUploadedImage(imageId, BACK4APP_USER_CLASS)
-                val userDbEntity = userEntity?.copy(imageUrl = imageUrl)?.toDbEntity()
-                if (userDbEntity != null) {
+                if (userEntity != null) {
+                    val imageId = userEntity.imageUrl ?: ""
+                    val imageUrl = remoteImageDataSource.getUploadedImage(
+                        imageId, BACK4APP_USER_CLASS
+                    )
+                    val userDbEntity = userEntity.copy(imageUrl = imageUrl).toDbEntity()
                     localUserDataSource.addCurrentUser(userDbEntity)
                 }
             }
+        }
+    }
+
+    fun refreshCurrentUser() {
+        authDataSource.getCurrentUser()?.uid?.let { userId ->
+            syncCurrentUser(userId)
         }
     }
 
@@ -74,10 +92,12 @@ class UserRepositoryImpl @Inject constructor(
         remoteUserDataSource.deleteUser(userId)
     }
 
-    override suspend fun getCurrentUser(): User? {
-        return localUserDataSource.getCurrentUser().map { user ->
-            user?.toDomain()
-        }.first()
+    override fun getCurrentUser(): Flow<User?> {
+        return localUserDataSource.getCurrentUser()
+            .map {
+                it?.toDomain()
+            }
+            .distinctUntilChanged()
     }
 
     override fun getRecentlyViewedProductIdsFromUserCollection(
@@ -98,6 +118,8 @@ class UserRepositoryImpl @Inject constructor(
             userId,
             mapOf(RECENTLY_VIEWED to recentlyViewedProducts)
         )
+        //val updatedUser = currentUser.copy(recentlyViewed = recentlyViewedProducts)
+        //localUserDataSource.addCurrentUser(updatedUser)
     }
 
     override suspend fun getDocumentRefOfTheUser(): DocumentReference? {

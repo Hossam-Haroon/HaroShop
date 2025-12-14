@@ -37,6 +37,10 @@ class OrderRepositoryImpl @Inject constructor(
         return remoteOrderDataSource.createOrder(order, userId)
     }
 
+    override suspend fun deleteAllOrders(){
+        localOrderDataSource.deleteAllOrders()
+    }
+
     override fun getAllOrdersForCurrentUser(userId: String): Flow<List<Order>> {
         return localOrderDataSource.getAllOrders().map {
             it.toDomain()

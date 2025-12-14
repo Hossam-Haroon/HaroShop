@@ -148,8 +148,8 @@ fun ProfileScreen(rootNavController: NavController, innerNavController: NavContr
             fontWeight = FontWeight.Bold,
             fontSize = 28.sp
         )
-        Spacer(modifier = Modifier.height(20.dp))
-        AnnouncementBox()
+        //Spacer(modifier = Modifier.height(20.dp))
+        //AnnouncementBox()
         Spacer(modifier = Modifier.height(20.dp))
         if (recentlyViewedProductsUrl.isNotEmpty()) {
             Text(

@@ -24,13 +24,10 @@ class CartSyncWorker @AssistedInject constructor(
     private val firebaseAuth: FirebaseAuth
 ) : CoroutineWorker(appContext,workerParams) {
     override suspend fun doWork(): Result {
-        Log.d("CartSyncWorker", "doWork() STARTED.")
         val userId = firebaseAuth.currentUser?.uid
         if (userId.isNullOrEmpty()){
-            Log.e("CartSyncWorker", "FATAL: User is NULL. Worker is failing.")
             return Result.failure()
         }
-        Log.d("CartSyncWorker", "User ID $userId found. Starting sync.")
         val cartRef = firestore.collection(USER).document(userId).collection(CART)
         try {
             val cartsToDelete = cartDao.getDeletedItems()

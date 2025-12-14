@@ -9,4 +9,5 @@ class LocalOrderDataSource @Inject constructor(
 ){
     suspend fun upsertAllOrders(orders:List<OrderDbEntity>) = orderDao.upsertAllOrders(orders)
     fun getAllOrders() = orderDao.getAllOrders()
+    suspend fun deleteAllOrders() = orderDao.deleteAllOrders()
 }

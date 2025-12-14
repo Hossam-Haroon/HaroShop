@@ -45,6 +45,7 @@ import com.example.e_commerceapp.presentation.theme.DarkBlue
 import com.example.e_commerceapp.presentation.theme.raleWay
 import com.example.e_commerceapp.presentation.viewmodels.AuthViewModel
 import com.example.e_commerceapp.presentation.viewmodels.SignUpViewModel
+import kotlin.math.sign
 
 @Composable
 fun SignUpScreen(onNavigateToHelloScreen: () -> Unit) {
@@ -52,7 +53,6 @@ fun SignUpScreen(onNavigateToHelloScreen: () -> Unit) {
     val signUpViewModel: SignUpViewModel = hiltViewModel()
     val userState = authViewModel.userState.collectAsState()
     val isLoading = authViewModel.isLoading.collectAsState()
-    val customerId by signUpViewModel.customerId.collectAsState()
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -63,37 +63,26 @@ fun SignUpScreen(onNavigateToHelloScreen: () -> Unit) {
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? -> imageUri = uri }
-    LaunchedEffect(userState.value) {
+    LaunchedEffect(userState.value?.getOrNull()?.uid) {
         userState.value?.onSuccess { userState ->
             signUpViewModel.createCustomerIdForPaymentMethods(email)
-            Toast.makeText(
-                context,
-                "sign up successful!",
-                Toast.LENGTH_LONG
-            ).show()
-            val imageUrl = imageUri?.let {
-                signUpViewModel.uploadImage(it, context)
-            }
             val fullPhoneNumber = countryCode + phoneNumber.toInt().toString()
-            val user = User(
-                userState.uid,
-                email,
-                userName,
-                fullPhoneNumber,
-                emptyList(),
-                "user",
-                emptyList(),
-                emptyList(),
-                imageUrl,
-                "",
-                customerId
-            )
-            signUpViewModel.createUserToFirebase(user)
-            onNavigateToHelloScreen()
-        }?.onFailure {
+            signUpViewModel.completeUserSetup(
+                userState.uid, email, userName, fullPhoneNumber, imageUri, context
+            ).onSuccess {
+                Toast.makeText(
+                    context,
+                    "sign up successful!",
+                    Toast.LENGTH_LONG
+                ).show()
+                onNavigateToHelloScreen()
+            }.onFailure {e->
+                Toast.makeText(context, "Setup failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }?.onFailure {authError ->
             Toast.makeText(
                 context,
-                "can't sign up, try again.",
+                "Authentication failed: ${authError.message}",
                 Toast.LENGTH_LONG
             ).show()
         }

@@ -25,7 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ActivityScreenViewModel @Inject constructor(
     getCategoriesTotalUseCase: GetCategoriesTotalUseCase,
-    private val getUserByIdUseCase: GetUserByIdUseCase,
+    getUserByIdUseCase: GetUserByIdUseCase,
     private val getAllOrdersForCurrentUserUseCase: GetAllOrdersForCurrentUserUseCase
 ):ViewModel() {
     val categoryTotals : StateFlow<Map<String,Float>> = getCategoriesTotalUseCase().stateIn(
@@ -39,9 +39,7 @@ class ActivityScreenViewModel @Inject constructor(
     val receivedOrdersSize = _receivedOrdersSize.asStateFlow()
     private var _toReceiveOrdersSize = MutableStateFlow(0)
     val toReceiveOrdersSize = _toReceiveOrdersSize.asStateFlow()
-    val userData : StateFlow<User?> = flow {
-        emit(getUserByIdUseCase())
-    }.stateIn(
+    val userData : StateFlow<User?> = getUserByIdUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = null

@@ -32,9 +32,7 @@ class HistoryViewModel @Inject constructor(
     CheckIfCurrentUserHasReviewForCurrentProductUseCase,
     private val createReviewAndUpdateUserReviewIdsUseCase: CreateReviewAndUpdateUserReviewIdsUseCase
 ):ViewModel() {
-    val userData : StateFlow<User?> = flow {
-        emit(getUserByIdUseCase())
-    }.stateIn(
+    val userData : StateFlow<User?> = getUserByIdUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = null

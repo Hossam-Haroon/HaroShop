@@ -74,18 +74,18 @@ fun IntroductionScreen(
         )
         Spacer(modifier = Modifier.height(15.dp))
         Text(
-            text = "Beautiful eCommerce UI Kit ",
+            text = "Beautiful eCommerce UI Kit. ",
             fontSize = 19.sp,
             fontFamily = raleWay,
             fontWeight = FontWeight.Light,
             modifier = Modifier.padding(start = 70.dp, end = 70.dp)
         )
         Spacer(modifier = Modifier.height(10.dp))
-        Text(text = "for your online store",
+        /*Text(text = "for your online store",
             fontSize = 19.sp,
             fontFamily = raleWay,
             fontWeight = FontWeight.Light
-        )
+        )*/
         Spacer(modifier = Modifier.height(80.dp))
         ColorfulButton(
             "Let's get started",

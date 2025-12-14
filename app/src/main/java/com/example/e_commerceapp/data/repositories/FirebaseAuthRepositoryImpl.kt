@@ -1,5 +1,7 @@
 package com.example.e_commerceapp.data.repositories
 
+import com.example.e_commerceapp.data.local.dataSources.LocalOrderDataSource
+import com.example.e_commerceapp.data.local.dataSources.LocalUserDataSource
 import com.example.e_commerceapp.data.remote.dataSources.RemoteAuthDataSource
 import com.example.e_commerceapp.domain.repositories.AuthenticationRepository
 import com.example.e_commerceapp.domain.model.HaroShopException
@@ -14,7 +16,9 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class FirebaseAuthRepositoryImpl @Inject constructor(
-    private val remoteAuthDataSource: RemoteAuthDataSource
+    private val remoteAuthDataSource: RemoteAuthDataSource,
+    private val localUserDataSource: LocalUserDataSource,
+    private val localOrderDataSource: LocalOrderDataSource
 ): AuthenticationRepository {
     override suspend fun logIn(email: String, password: String): Result<FirebaseUser> {
         return try {
@@ -49,6 +53,10 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
             ))
         }
     }
-    override fun logOut() = remoteAuthDataSource.logOut()
+    override suspend fun logOut() {
+        remoteAuthDataSource.logOut()
+        localUserDataSource.deleteCurrentUser()
+        localOrderDataSource.deleteAllOrders()
+    }
     override fun getCurrentUser() = remoteAuthDataSource.getCurrentUser()
 }
